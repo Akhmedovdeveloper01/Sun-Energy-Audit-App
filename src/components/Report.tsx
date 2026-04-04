@@ -63,20 +63,20 @@ export default function Report({ data }: ReportProps) {
     { num: 1, name: '', watt: 0, count: 1, totalKw: 0, hours: 0, dayKw: 0, monthKw: 0 },
   ]);
 
-  const showDebugInfo = () => {
-    const debugDiv = document.getElementById('debug-log');
-    if (!debugDiv) return;
+  // const showDebugInfo = () => {
+  //   const debugDiv = document.getElementById('debug-log');
+  //   if (!debugDiv) return;
   
-    let logText = `=== DEBUG INFORMATION ===\n\n`;
-    logText += `Vaqt: ${new Date().toLocaleString('uz-UZ')}\n`;
-    logText += `Telegram User ID: ${tg?.initDataUnsafe?.user?.id || 'topilmadi'}\n`;
-    logText += `Vercel URL: ${window.location.origin}\n\n`;
-    logText += `=== Fetch ===\n`;
-    logText += `Fetch yo'li: https://sunenergyaudit.vercel.app/api/send-report\n`;
+  //   let logText = `=== DEBUG INFORMATION ===\n\n`;
+  //   logText += `Vaqt: ${new Date().toLocaleString('uz-UZ')}\n`;
+  //   logText += `Telegram User ID: ${tg?.initDataUnsafe?.user?.id || 'topilmadi'}\n`;
+  //   logText += `Vercel URL: ${window.location.origin}\n\n`;
+  //   logText += `=== Fetch ===\n`;
+  //   logText += `Fetch yo'li: https://sunenergyaudit.vercel.app/api/send-report\n`;
   
-    debugDiv.textContent = logText;
-    debugDiv.style.display = 'block';
-  };
+  //   debugDiv.textContent = logText;
+  //   debugDiv.style.display = 'block';
+  // };
   const updateArch = (i: number, k: keyof ArchRow, v: string) =>
     setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
 
@@ -346,7 +346,7 @@ export default function Report({ data }: ReportProps) {
       )}
 
       <div style={{ marginTop: '20px', padding: '12px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd' }}>
-        <button
+        {/* <button
           onClick={showDebugInfo}
           style={{
             width: '100%',
@@ -362,7 +362,7 @@ export default function Report({ data }: ReportProps) {
           }}
         >
           🔍 Debug Log ko‘rish (Xatolikni aniqlash)
-        </button>
+        </button> */}
 
         <div id="debug-log" style={{
           fontSize: '12px',
