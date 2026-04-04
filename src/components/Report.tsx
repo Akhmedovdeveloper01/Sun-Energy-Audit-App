@@ -70,14 +70,12 @@ export default function Report({ data }: ReportProps) {
     let logText = `=== DEBUG INFORMATION ===\n\n`;
     logText += `Vaqt: ${new Date().toLocaleString('uz-UZ')}\n`;
     logText += `Telegram User ID: ${tg?.initDataUnsafe?.user?.id || 'topilmadi'}\n`;
-    logText += `Netlify URL: ${window.location.origin}\n\n`;
+    logText += `Vercel URL: ${window.location.origin}\n\n`;
 
     logText += `=== So‘nggi fetch urinishlari ===\n`;
 
-    // Sizning oldingi sendToChat dan log olish uchun global log array qo‘shish mumkin,
-    // lekin hozircha oddiy tekshiruv:
-    logText += `Fetch yo‘li: /.netlify/functions/send-report\n`;
-    logText += `BOT_TOKEN mavjudligi: ${!!process.env.BOT_TOKEN ? 'Ha' : 'Yo‘q (Netlify env)'}\n\n`;
+    logText += `Fetch yo‘li: /api/send-report\n`;
+    logText += `BOT_TOKEN mavjudligi: ${!!process.env.BOT_TOKEN ? 'Ha' : 'Yo‘q (Vercel env)'}\n\n`;
 
     debugDiv.textContent = logText;
     debugDiv.style.display = 'block';
@@ -126,7 +124,7 @@ export default function Report({ data }: ReportProps) {
     if (debugDiv) debugDiv.style.display = 'none'; 
 
     try {
-      console.log("🚀 Fetch boshlandi: /.netlify/functions/send-report");
+      console.log("🚀 Fetch boshlandi: /api/send-report");
 
       const res = await fetch(
         // 'https://sun-energy-audit-app.netlify.app/.netlify/functions/send-report',
