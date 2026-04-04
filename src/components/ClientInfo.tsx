@@ -6,7 +6,7 @@ interface ClientInfoProps {
   update: (data: Partial<ClientData>) => void;
   next: () => void;
 }
-
+// background: #f0f4ff;
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -15,7 +15,7 @@ const styles = `
     padding: 16px;
     max-width: 480px;
     margin: 0 auto;
-    background: #f0f4ff;
+    background: transparent;
     min-height: 100vh;
   }
 
@@ -280,7 +280,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
               🏗 Qurilish ma'lumotlari
             </div>
 
-            <div className="ci-row ci-row-2">
+            {/* <div className="ci-row ci-row-2"> */}
               <div className="ci-field">
                 <div className="ci-label">Qurilgan yili <span>*</span></div>
                 <input className="ci-input" type="text" name="buildYear"
@@ -295,7 +295,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
                   onChange={handleChange} required
                   placeholder="2016" />
               </div>
-            </div>
+            {/* </div> */}
 
             <div className="ci-row ci-row-3">
               <div className="ci-field">
