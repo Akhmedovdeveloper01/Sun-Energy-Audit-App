@@ -129,7 +129,8 @@ export default function Report({ data }: ReportProps) {
       console.log("🚀 Fetch boshlandi: /.netlify/functions/send-report");
 
       const res = await fetch(
-        'https://sun-energy-audit-app.netlify.app/.netlify/functions/send-report',
+        // 'https://sun-energy-audit-app.netlify.app/.netlify/functions/send-report',
+        'https://sunenergyaudit.vercel.app/api/send-report'
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
