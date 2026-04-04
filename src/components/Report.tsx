@@ -66,21 +66,16 @@ export default function Report({ data }: ReportProps) {
   const showDebugInfo = () => {
     const debugDiv = document.getElementById('debug-log');
     if (!debugDiv) return;
-
+  
     let logText = `=== DEBUG INFORMATION ===\n\n`;
     logText += `Vaqt: ${new Date().toLocaleString('uz-UZ')}\n`;
     logText += `Telegram User ID: ${tg?.initDataUnsafe?.user?.id || 'topilmadi'}\n`;
     logText += `Vercel URL: ${window.location.origin}\n\n`;
-
-    logText += `=== So‘nggi fetch urinishlari ===\n`;
-
-    logText += `Fetch yo‘li: /api/send-report\n`;
-    logText += `BOT_TOKEN mavjudligi: ${!!process.env.BOT_TOKEN ? 'Ha' : 'Yo‘q (Vercel env)'}\n\n`;
-
+    logText += `=== Fetch ===\n`;
+    logText += `Fetch yo'li: https://sunenergyaudit.vercel.app/api/send-report\n`;
+  
     debugDiv.textContent = logText;
     debugDiv.style.display = 'block';
-
-    showAlert('Debug ma’lumotlar ko‘rsatildi. Pastdagi blokni ko‘ring va menga yuboring.');
   };
   const updateArch = (i: number, k: keyof ArchRow, v: string) =>
     setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
