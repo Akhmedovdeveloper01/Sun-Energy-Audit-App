@@ -1,7 +1,14 @@
-const {
+// const {
+//   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+//   AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign,
+// } = require('docx');
+
+// const BOT_TOKEN = process.env.BOT_TOKEN;
+
+import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign,
-} = require('docx');
+} from 'docx';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
@@ -254,7 +261,7 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
 }
 
 // ─── Netlify Handler ──────────────────────────────────────────────────────────
-exports.handler = async (event) => {
+export const handler = async (event) =>  {
   console.log('=== SEND-REPORT BOSHLANDI ===');
 
   const headers = {
