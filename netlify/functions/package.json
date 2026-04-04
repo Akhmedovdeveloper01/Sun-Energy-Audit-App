@@ -3,5 +3,13 @@
     "version": "1.0.0",
     "dependencies": {
         "docx": "^8.5.0"
-    }
+    },
+    "main": "send-report.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": ""
 }
