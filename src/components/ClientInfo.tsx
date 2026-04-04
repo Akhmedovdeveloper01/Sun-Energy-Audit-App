@@ -23,14 +23,14 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
 
   return (
     <form onSubmit={handleSubmit} className="form-container">
-      <h2>📝 Audit ma'lumotlari</h2>
+      <h2 className='text-white'>📝 Audit ma'lumotlari</h2>
 
       {/* I. Umumiy ma'lumot */}
       <div className="form-section">
-        <h3>I. Umumiy ma'lumot</h3>
+        <h3 className='text-white'>I. Umumiy ma'lumot</h3>
 
         <div className="form-group">
-          <label>Ob'ekt joylashgan manzili *</label>
+          <label className='text-white'>Ob'ekt joylashgan manzili *</label>
           <input
             type="text"
             name="address"
@@ -42,7 +42,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
         </div>
 
         <div className="form-group">
-          <label>Xonadon egasi *</label>
+          <label className='text-white'>Xonadon egasi *</label>
           <input
             type="text"
             name="fullName"
@@ -56,7 +56,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
 
         <div className="form-row">
           <div className="form-group">
-            <label>Telefon raqami *</label>
+            <label className='text-white'>Telefon raqami *</label>
             <input
               type="tel"
               name="phone"
@@ -67,7 +67,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             />
           </div>
           <div className="form-group">
-            <label>Foydalanuvchilar soni *</label>
+            <label className='text-white'>Foydalanuvchilar soni *</label>
             <input
               type="text"
               name="residentsCount"
@@ -81,7 +81,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
 
         <div className="form-row">
           <div className="form-group">
-            <label>Qurilgan yili *</label>
+            <label className='text-white'>Qurilgan yili *</label>
             <input
               type="text"
               name="buildYear"
@@ -92,7 +92,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             />
           </div>
           <div className="form-group">
-            <label>Oxirgi ta'mirlangan yil *</label>
+            <label className='text-white'>Oxirgi ta'mirlangan yil *</label>
             <input
               type="text"
               name="lastRepairYear"
@@ -106,7 +106,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
 
         <div className="form-row">
           <div className="form-group">
-            <label>Binolar soni *</label>
+            <label className='text-white'>Binolar soni *</label>
             <input
               type="text"
               name="buildingCount"
@@ -117,7 +117,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             />
           </div>
           <div className="form-group">
-            <label>Qavatligi *</label>
+            <label className='text-white'>Qavatligi *</label>
             <input
               type="text"
               name="floorCount"
@@ -128,7 +128,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             />
           </div>
           <div className="form-group">
-            <label>Xonalar soni *</label>
+            <label className='text-white'>Xonalar soni *</label>
             <input
               type="text"
               name="roomCount"
@@ -141,7 +141,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
         </div>
 
         <div className="form-group">
-          <label>Foydalanish maqsadi *</label>
+          <label className='text-white'>Foydalanish maqsadi *</label>
           <select name="usagePurpose" value={formData.usagePurpose} onChange={handleChange} required>
             <option value="">Tanlang</option>
             <option value="Турар жой">🏠 Турар жой</option>
@@ -150,7 +150,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
         </div>
       </div>
 
-      <button type="submit" className="btn-next">Keyingi →</button>
+      <button type="submit" className="btn-next ml-auto">Keyingi →</button>
     </form>
   );
 }

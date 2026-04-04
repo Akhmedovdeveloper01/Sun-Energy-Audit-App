@@ -92,7 +92,7 @@ function App() {
 
   return (
     <div className="app-container" style={{ backgroundColor: themeParams?.bg_color || '#fff' }}>
-      <div className="step">Qadam {step} / 2</div>
+      <div className="step text-white">Qadam {step} / 2</div>
 
       {step === 1 && <ClientInfo data={auditData.client} update={updateClient} next={nextStep} />}
       {/* {step === 2 && <Checklist data={auditData.checklist} update={updateChecklist} next={nextStep} prev={prevStep} />} */}

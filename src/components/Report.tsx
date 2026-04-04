@@ -123,23 +123,10 @@ export default function Report({ data }: ReportProps) {
     setIsGenerating(true);
 
     const debugDiv = document.getElementById('debug-log');
-    if (debugDiv) debugDiv.style.display = 'none'; // eski logni tozalash
+    if (debugDiv) debugDiv.style.display = 'none'; 
 
     try {
       console.log("🚀 Fetch boshlandi: /.netlify/functions/send-report");
-
-      // const res = await fetch('/.netlify/functions/send-report', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     chatId,
-      //     client: data.client,
-      //     extra: { docNumber: docNumber || '001', formDate, auditDate },
-      //     arch,
-      //     eng,
-      //     devs,
-      //   }),
-      // });
 
       const res = await fetch(
         'https://sun-energy-audit-app.netlify.app/.netlify/functions/send-report',
