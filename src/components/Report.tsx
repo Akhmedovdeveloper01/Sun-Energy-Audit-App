@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { AuditData } from '../types/audit.types';
 import { useTelegram } from '../hooks/useTelegram';
 
-// .env ga qo'ying: VITE_API_URL=https://audit-api-xxxx.vercel.app
-const API_URL = import.meta.env.VITE_API_URL;
+// const API_URL = import.meta.env.VITE_API_URL;
 
 interface ReportProps {
   data: AuditData;
 }
 
-interface ArchRow { name: string; desc: string; area: string }
+interface ArchRow { name: string; desc: string; area: string, value: string }
 interface EngRow { type: string; desc: string; note: string }
 interface DevRow {
   num: number; name: string; watt: number; count: number;
@@ -17,25 +16,25 @@ interface DevRow {
 }
 
 const DEFAULT_ARCH: ArchRow[] = [
-  { name: "Umumiy ma'lumot (xona soni, qavatliligi, umumiy maydon)", desc: '', area: '' },
-  { name: 'Tashqi devorlar (material, qalinligi, izolyatsiya holati)', desc: '', area: '' },
-  { name: "Er to'la (material, izolyatsiya turi va qalinligi)", desc: '', area: '' },
-  { name: 'Tom/shift (material, izolyatsiya turi va qalinligi)', desc: '', area: '' },
-  { name: 'Pol (material, izolyatsiya turi va holati)', desc: '', area: '' },
-  { name: 'Oynalar (rama turi, shisha soni)', desc: '', area: '' },
-  { name: 'Tashqi eshiklar (material, izolyatsiya holati)', desc: '', area: '' },
-  { name: 'Isitilayotgan xonalar (umumiy maydon)', desc: '', area: '' },
+  { name: "Umumiy ma'lumot (xona soni, qavatliligi, umumiy maydon)", value: "", desc: '10 xona, 1 qavatli', area: '565,22' },
+  { name: 'Tashqi devorlar (material, qalinligi, izolyatsiya holati)', value: "", desc: `Pishgan g'isht 45 sm`, area: '766,23' },
+  { name: "Er to'la (material, izolyatsiya turi va qalinligi)", value: "", desc: 'Beton plita', area: '154' },
+  { name: 'Tom/shift (material, izolyatsiya turi va qalinligi)', value: "", desc: 'Beton plita, profnastil', area: '600,74' },
+  { name: 'Pol (material, izolyatsiya turi va holati)', value: "", desc: 'Monolit beton', area: '489' },
+  { name: 'Oynalar (rama turi, shisha soni)', value: "", desc: 'Plastik 2 qavatli shisha', area: '123,09' },
+  { name: 'Tashqi eshiklar (material, izolyatsiya holati)', value: "", desc: 'Plastik eshiklar', area: '19,68' },
+  { name: 'Isitilayotgan xonalar (umumiy maydon)', value: "", desc: '10 xonali 1 qavatli turar joy', area: '545' },
 ];
 
 const DEFAULT_ENG: EngRow[] = [
-  { type: 'Isitish tizimi', desc: '', note: '' },
-  { type: "Issiq suv ta'minoti", desc: '', note: '' },
-  { type: 'Sovitish tizimi', desc: '', note: '' },
-  { type: 'Yoritish tizimi', desc: '', note: '' },
-  { type: 'Maishiy elektr uskunalari', desc: '', note: '' },
-  { type: "Suv ta'minoti", desc: '', note: '' },
-  { type: 'Shamollatish', desc: '', note: '' },
-  { type: 'Elektr nasoslar', desc: '', note: '' },
+  { type: 'Isitish tizimi', desc: '3 ta metall gaz, temir truba', note: '' },
+  { type: "Issiq suv ta'minoti", desc: '2 kVt lik Royal elektir suv isitish', note: '' },
+  { type: 'Sovitish tizimi', desc: '2 ta konditsaner, A sinf', note: '' },
+  { type: 'Yoritish tizimi', desc: '44 ta LED lampa, (5 Vt dan 40 Vt gacha', note: '' },
+  { type: 'Maishiy elektr uskunalari', desc: 'Muzlatgich 2 ta, 1 ta Televezor, kir moshina', note: '' },
+  { type: "Suv ta'minoti", desc: `Markazlashgan suv tarmog'i`, note: '' },
+  { type: 'Shamollatish', desc: 'Tabiy shamollatish', note: '' },
+  { type: 'Elektr nasoslar', desc: '1 ta 0,55 kVt', note: '' },
 ];
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -64,6 +63,27 @@ export default function Report({ data }: ReportProps) {
     { num: 1, name: '', watt: 0, count: 1, totalKw: 0, hours: 0, dayKw: 0, monthKw: 0 },
   ]);
 
+  const showDebugInfo = () => {
+    const debugDiv = document.getElementById('debug-log');
+    if (!debugDiv) return;
+
+    let logText = `=== DEBUG INFORMATION ===\n\n`;
+    logText += `Vaqt: ${new Date().toLocaleString('uz-UZ')}\n`;
+    logText += `Telegram User ID: ${tg?.initDataUnsafe?.user?.id || 'topilmadi'}\n`;
+    logText += `Netlify URL: ${window.location.origin}\n\n`;
+
+    logText += `=== So‘nggi fetch urinishlari ===\n`;
+
+    // Sizning oldingi sendToChat dan log olish uchun global log array qo‘shish mumkin,
+    // lekin hozircha oddiy tekshiruv:
+    logText += `Fetch yo‘li: /.netlify/functions/send-report\n`;
+    logText += `BOT_TOKEN mavjudligi: ${!!process.env.BOT_TOKEN ? 'Ha' : 'Yo‘q (Netlify env)'}\n\n`;
+
+    debugDiv.textContent = logText;
+    debugDiv.style.display = 'block';
+
+    showAlert('Debug ma’lumotlar ko‘rsatildi. Pastdagi blokni ko‘ring va menga yuboring.');
+  };
   const updateArch = (i: number, k: keyof ArchRow, v: string) =>
     setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
 
@@ -95,36 +115,72 @@ export default function Report({ data }: ReportProps) {
   const sendToChat = async () => {
     const chatId = tg?.initDataUnsafe?.user?.id;
 
-    // Debug: nima yuborilayotganini ko'rish
-    console.log('API_URL:', API_URL);
-    console.log('chatId:', chatId);
-
-    if (!chatId) { showAlert('❌ Telegram orqali oching'); return; }
-    if (!chatId) { showAlert('❌ Telegram orqali oching'); return; }
+    if (!chatId) {
+      showAlert('❌ Telegram orqali oching');
+      return;
+    }
 
     setIsGenerating(true);
+
+    const debugDiv = document.getElementById('debug-log');
+    if (debugDiv) debugDiv.style.display = 'none'; // eski logni tozalash
+
     try {
-      const res = await fetch(`${API_URL}/api/send-report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chatId,
-          client: data.client,
-          extra: { docNumber: docNumber || '001', formDate, auditDate },
-          arch,
-          eng,
-          devs,
-        }),
-      });
+      console.log("🚀 Fetch boshlandi: /.netlify/functions/send-report");
 
+      // const res = await fetch('/.netlify/functions/send-report', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     chatId,
+      //     client: data.client,
+      //     extra: { docNumber: docNumber || '001', formDate, auditDate },
+      //     arch,
+      //     eng,
+      //     devs,
+      //   }),
+      // });
 
-      const result = await res.json();
-      if (!result.ok) throw new Error(result.error || 'Server xatolik');
+      const res = await fetch(
+        'https://sun-energy-audit-app.netlify.app/.netlify/functions/send-report',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId, client: data.client, extra: { docNumber: docNumber || '001', formDate, auditDate }, arch, eng, devs }),
+        }
+      );
+      console.log("📡 Response status:", res.status, res.statusText);
 
-      hapticImpact('heavy');
-      showAlert('✅ Word hujjat chatga yuborildi!');
+      let resultText = '';
+      try {
+        const text = await res.text();
+        resultText = text;
+        console.log("Server javobi (text):", text.substring(0, 500));
+
+        const result = JSON.parse(text);
+        console.log("Parsed JSON:", result);
+
+        if (!res.ok || !result.ok) {
+          throw new Error(result.error || `Server xatosi (${res.status})`);
+        }
+
+        hapticImpact('heavy');
+        showAlert('✅ Word hujjat chatga yuborildi!');
+      } catch (parseError) {
+        console.error("JSON parse xatosi:", parseError);
+        throw new Error(`Server javobi noto‘g‘ri formatda: ${resultText.substring(0, 200)}`);
+      }
+
     } catch (e: any) {
+      console.error("❌ To‘liq xato:", e);
       showAlert(`❌ Xatolik: ${e.message}`);
+
+      // Debug div ga xatoni qo‘shish
+      const debugDiv = document.getElementById('debug-log');
+      if (debugDiv) {
+        debugDiv.textContent = `XATO: ${e.message}\n\n${e.stack || ''}`;
+        debugDiv.style.display = 'block';
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -181,11 +237,11 @@ export default function Report({ data }: ReportProps) {
               <label style={lbl}>Tavsif (material, turi)</label>
               <input style={{ ...inp, marginBottom: '6px' }} value={row.desc}
                 onChange={e => updateArch(i, 'desc', e.target.value)}
-                placeholder="masalan: pishgan g'isht, 40 sm..." />
+                placeholder={`masalan: ${row.desc}`} />
               <label style={lbl}>Maydoni / qiymati (m²)</label>
               <input style={inp} value={row.area}
                 onChange={e => updateArch(i, 'area', e.target.value)}
-                placeholder="masalan: 565,22" />
+                placeholder={`masalan: ${row.area}`} />
             </div>
           ))}
         </div>
@@ -201,7 +257,7 @@ export default function Report({ data }: ReportProps) {
               <label style={lbl}>Tavsif (qurilma, marka, quvvati)</label>
               <input style={{ ...inp, marginBottom: '6px' }} value={row.desc}
                 onChange={e => updateEng(i, 'desc', e.target.value)}
-                placeholder="masalan: 2 kVt Royal suv isitgich" />
+                placeholder={`masalan: ${row.desc}`} />
               <label style={lbl}>Izoh (ixtiyoriy)</label>
               <input style={inp} value={row.note}
                 onChange={e => updateEng(i, 'note', e.target.value)}
@@ -308,6 +364,37 @@ export default function Report({ data }: ReportProps) {
           </p>
         </div>
       )}
+
+      <div style={{ marginTop: '20px', padding: '12px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd' }}>
+        <button
+          onClick={showDebugInfo}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: '#ff9800',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '15px',
+            fontWeight: 600,
+            marginBottom: '10px',
+            cursor: 'pointer'
+          }}
+        >
+          🔍 Debug Log ko‘rish (Xatolikni aniqlash)
+        </button>
+
+        <div id="debug-log" style={{
+          fontSize: '12px',
+          background: '#fff',
+          padding: '10px',
+          borderRadius: '8px',
+          maxHeight: '300px',
+          overflowY: 'auto',
+          whiteSpace: 'pre-wrap',
+          display: 'none'
+        }}></div>
+      </div>
     </div>
   );
 }

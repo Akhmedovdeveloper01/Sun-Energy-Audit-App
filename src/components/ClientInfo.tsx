@@ -24,17 +24,17 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
   return (
     <form onSubmit={handleSubmit} className="form-container">
       <h2>📝 Audit ma'lumotlari</h2>
-      
+
       {/* I. Umumiy ma'lumot */}
       <div className="form-section">
         <h3>I. Umumiy ma'lumot</h3>
-        
+
         <div className="form-group">
           <label>Ob'ekt joylashgan manzili *</label>
           <input
             type="text"
             name="address"
-            value={formData.address}
+            value={formData.address || 'Sarbon'}
             onChange={handleChange}
             required
             placeholder="Viloyat, tuman, ko'cha, uy raqami"
@@ -46,7 +46,8 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
           <input
             type="text"
             name="fullName"
-            value={formData.fullName}
+            value={formData.fullName ||
+              "Mahmud Ahmedov"}
             onChange={handleChange}
             required
             placeholder="Ism Familiya"
@@ -59,7 +60,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             <input
               type="tel"
               name="phone"
-              value={formData.phone}
+              value={formData.phone || "+998913315598"}
               onChange={handleChange}
               required
               placeholder="+998 XX XXX XX XX"
@@ -70,7 +71,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             <input
               type="text"
               name="residentsCount"
-              value={formData.residentsCount}
+              value={formData.residentsCount || "7"}
               onChange={handleChange}
               required
               placeholder="Masalan: 6 нафар"
@@ -84,7 +85,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             <input
               type="text"
               name="buildYear"
-              value={formData.buildYear}
+              value={formData.buildYear || "2020"}
               onChange={handleChange}
               required
               placeholder="Masalan: 2001"
@@ -95,7 +96,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             <input
               type="text"
               name="lastRepairYear"
-              value={formData.lastRepairYear}
+              value={formData.lastRepairYear || "2023"}
               onChange={handleChange}
               required
               placeholder="Masalan: 2016"
@@ -109,7 +110,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             <input
               type="text"
               name="buildingCount"
-              value={formData.buildingCount}
+              value={formData.buildingCount || "1"}
               onChange={handleChange}
               required
               placeholder="Masalan: 1"
@@ -120,7 +121,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             <input
               type="text"
               name="floorCount"
-              value={formData.floorCount}
+              value={formData.floorCount || "1"}
               onChange={handleChange}
               required
               placeholder="Masalan: 1-қават"
@@ -131,7 +132,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
             <input
               type="text"
               name="roomCount"
-              value={formData.roomCount}
+              value={formData.roomCount|| "9"}
               onChange={handleChange}
               required
               placeholder="Masalan: 5"
