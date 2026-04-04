@@ -256,7 +256,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
                 placeholder="Ism Familiya Sharif" />
             </div>
 
-            <div className="ci-row ci-row-2">
+            {/* <div className="ci-row ci-row-2"> */}
               <div className="ci-field">
                 <div className="ci-label">Telefon <span>*</span></div>
                 <input className="ci-input" type="tel" name="phone"
@@ -271,7 +271,7 @@ export default function ClientInfo({ data, update, next }: ClientInfoProps) {
                   onChange={handleChange} required
                   placeholder="6 nafar" />
               </div>
-            </div>
+            {/* </div> */}
           </div>
 
           {/* Qurilish ma'lumotlari */}
