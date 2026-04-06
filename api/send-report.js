@@ -1,3 +1,4 @@
+// @vercel/node
 import {
     Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
     AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign,

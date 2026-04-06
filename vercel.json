@@ -1,8 +1,13 @@
 {
-    "functions": {
-      "api/send-report.js": {
-        "memory": 256,
-        "maxDuration": 15
-      }
+  "functions": {
+    "api/send-report.js": {
+      "memory": 256,
+      "maxDuration": 15
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_VERSION": "18"
     }
   }
+}
