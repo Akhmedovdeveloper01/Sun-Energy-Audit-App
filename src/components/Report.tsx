@@ -345,8 +345,8 @@ export default function Report({ data }: ReportProps) {
         </div>
       )}
 
-      <div style={{ marginTop: '20px', padding: '12px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd' }}>
-        {/* <button
+      {/* <div style={{ marginTop: '20px', padding: '12px', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #ddd' }}>
+        <button
           onClick={showDebugInfo}
           style={{
             width: '100%',
@@ -362,7 +362,7 @@ export default function Report({ data }: ReportProps) {
           }}
         >
           🔍 Debug Log ko‘rish (Xatolikni aniqlash)
-        </button> */}
+        </button>
 
         <div id="debug-log" style={{
           fontSize: '12px',
@@ -374,7 +374,7 @@ export default function Report({ data }: ReportProps) {
           whiteSpace: 'pre-wrap',
           display: 'none'
         }}></div>
-      </div>
+      </div> */}
     </div>
   );
 }
