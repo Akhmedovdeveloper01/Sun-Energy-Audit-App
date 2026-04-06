@@ -1,8 +1,0 @@
-[build]
-  command = "npm run build && cd netlify/functions && npm install"
-  publish = "dist"
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "nft"
-  included_files = ["netlify/functions/node_modules/**"]
