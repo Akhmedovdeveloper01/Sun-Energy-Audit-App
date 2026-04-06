@@ -304,20 +304,15 @@ import {
 } from 'docx';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
-
-const W = 9638; // A4, 2cm margins: aniq kenglik
+const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
+const W = 9638;
 const border = { style: BorderStyle.SINGLE, size: 4, color: '000000' };
 const borders = { top: border, bottom: border, left: border, right: border };
 
 function cell(text, opts = {}) {
-  const {
-    width = 2000, bold = false, shade = 'FFFFFF',
-    align = AlignmentType.LEFT, size = 20, colSpan, italics = false,
-  } = opts;
+  const { width = 2000, bold = false, shade = 'FFFFFF', align = AlignmentType.LEFT, size = 20, colSpan, italics = false } = opts;
   return new TableCell({
-    borders,
-    columnSpan: colSpan,
-    verticalAlign: VerticalAlign.CENTER,
+    borders, columnSpan: colSpan, verticalAlign: VerticalAlign.CENTER,
     width: { size: width, type: WidthType.DXA },
     shading: { fill: shade, type: ShadingType.CLEAR },
     margins: { top: 80, bottom: 80, left: 120, right: 120 },
@@ -350,7 +345,6 @@ function spacer() {
 async function buildDocx({ client, extra, arch, eng, devs }) {
   const GRAY = 'D9D9D9';
 
-  // Sarlavha: 5638 + 4000 = 9638
   function headerTable() {
     return new Table({
       width: { size: W, type: WidthType.DXA },
@@ -372,9 +366,7 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
           }),
           cell('Sana', { width: 4000, bold: true }),
         ]}),
-        new TableRow({ children: [
-          cell(extra.auditDate, { width: 4000, align: AlignmentType.CENTER }),
-        ]}),
+        new TableRow({ children: [cell(extra.auditDate, { width: 4000, align: AlignmentType.CENTER })] }),
         new TableRow({ children: [
           cell('Raqami', { width: 5638, bold: true }),
           cell(`№ ${extra.docNumber}`, { width: 4000, align: AlignmentType.CENTER }),
@@ -383,7 +375,6 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
     });
   }
 
-  // Umumiy ma'lumot: 4000 + 5638 = 9638
   function generalTable() {
     const rows = [
       ["Ob'ekt joylashgan manzili", client.address || ''],
@@ -403,12 +394,10 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
     });
   }
 
-  // Arxitektura: 5000 + 3638 + 1000 = 9638
   function archTable() {
     const colW = [5000, 3638, 1000];
     return new Table({
-      width: { size: W, type: WidthType.DXA },
-      columnWidths: colW,
+      width: { size: W, type: WidthType.DXA }, columnWidths: colW,
       rows: [
         new TableRow({ tableHeader: true, children: [
           cell("Ko'rsatkich", { width: colW[0], bold: true, shade: GRAY, align: AlignmentType.CENTER }),
@@ -424,13 +413,11 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
     });
   }
 
-  // Muhandislik: 2500 + 4638 + 2500 = 9638
   function engTable() {
     const colW = [2500, 4638, 2500];
     const total = (devs || []).reduce((s, d) => s + (d.monthKw || 0), 0).toFixed(2);
     return new Table({
-      width: { size: W, type: WidthType.DXA },
-      columnWidths: colW,
+      width: { size: W, type: WidthType.DXA }, columnWidths: colW,
       rows: [
         new TableRow({ tableHeader: true, children: [
           cell('Tizim turi', { width: colW[0], bold: true, shade: GRAY, align: AlignmentType.CENTER }),
@@ -459,12 +446,10 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
     });
   }
 
-  // Elektr qurilmalar: 500+2638+800+700+900+900+1100+1100 = 9638
   function devTable() {
     const colW = [500, 2638, 800, 700, 900, 900, 1100, 1100];
     return new Table({
-      width: { size: W, type: WidthType.DXA },
-      columnWidths: colW,
+      width: { size: W, type: WidthType.DXA }, columnWidths: colW,
       rows: [
         new TableRow({ tableHeader: true, children: [
           cell('№', { width: colW[0], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
@@ -473,8 +458,8 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
           cell('Soni dona', { width: colW[3], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
           cell('Umumiy quvvati kVt', { width: colW[4], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
           cell('Ishlash vaqti soat', { width: colW[5], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
-          cell("EE sut kVt*soat", { width: colW[6], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
-          cell("EE oy kVt*soat", { width: colW[7], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
+          cell('EE sut kVt*soat', { width: colW[6], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
+          cell('EE oy kVt*soat', { width: colW[7], bold: true, shade: GRAY, align: AlignmentType.CENTER, size: 18 }),
         ]}),
         ...(devs || []).map(r => new TableRow({ children: [
           cell(r.num || '', { width: colW[0], align: AlignmentType.CENTER, size: 18 }),
@@ -514,39 +499,26 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
       },
       children: [
         new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 0, after: 60 },
+          alignment: AlignmentType.CENTER, spacing: { before: 0, after: 60 },
           children: [new TextRun({ text: 'ENERGIYA AUDIT XULOSASI', bold: true, size: 32, font: 'Times New Roman' })],
         }),
         new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 0, after: 200 },
+          alignment: AlignmentType.CENTER, spacing: { before: 0, after: 200 },
           children: [new TextRun({ text: '(Aholi uy-joylari uchun)', size: 22, font: 'Times New Roman', italics: true })],
         }),
-        headerTable(),
-        spacer(),
+        headerTable(), spacer(),
         boldLabel("I. Umumiy ma'lumot"),
-        generalTable(),
-        spacer(),
+        generalTable(), spacer(),
         heading('II. Uy-joy tavsifi'),
         heading('2.1. Arxitektura va konstruktsiya xususiyatlari', 22),
-        spacer(),
-        archTable(),
-        spacer(),
+        spacer(), archTable(), spacer(),
         heading('2.2. Muhandislik tizimlari', 22),
-        spacer(),
-        engTable(),
-        spacer(),
+        spacer(), engTable(), spacer(),
         heading("2.3. Asosiy elektr qurilmalari tarkibi va ularning ko'rsatgichlari", 22),
-        spacer(),
-        devTable(),
-        spacer(),
+        spacer(), devTable(), spacer(),
         new Paragraph({
           spacing: { before: 60, after: 60 },
-          children: [new TextRun({
-            text: "Izoh: O'rtacha oylik EE iste'moliga mos keladigan ko'rsatgichlar",
-            size: 18, font: 'Times New Roman', italics: true,
-          })],
+          children: [new TextRun({ text: "Izoh: O'rtacha oylik EE iste'moliga mos keladigan ko'rsatgichlar", size: 18, font: 'Times New Roman', italics: true })],
         }),
       ],
     }],
@@ -555,6 +527,18 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
   return Packer.toBuffer(doc);
 }
 
+// ─── Rasmni Telegram ga yuborish ─────────────────────────────────────────────
+async function sendPhoto(chatId, photoBase64, mime, caption) {
+  const blob = new Blob([Buffer.from(photoBase64, 'base64')], { type: mime });
+  const fd = new FormData();
+  fd.append('chat_id', String(chatId));
+  fd.append('photo', blob, 'photo.jpg');
+  if (caption) fd.append('caption', caption);
+  const res = await fetch(`${TG}/sendPhoto`, { method: 'POST', body: fd });
+  return res.json();
+}
+
+// ─── Vercel Handler ───────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -564,13 +548,22 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { chatId, client, extra, arch, eng, devs } = req.body;
+    const { chatId, client, extra, arch, eng, devs, photos = [] } = req.body;
 
     if (!BOT_TOKEN) throw new Error("BOT_TOKEN Vercel Environment Variables ga qo'shilmagan");
     if (!chatId) throw new Error('chatId topilmadi');
 
-    const buffer = await buildDocx({ client, extra, arch, eng, devs });
+    // 1. Rasmlarni yuborish (har birini alohida)
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+      const caption = i === 0
+        ? `📸 Ob'ekt rasmlari\n👤 ${client?.fullName}\n📍 ${client?.address}` 
+        : null;
+      await sendPhoto(chatId, photo.base64, photo.mime || 'image/jpeg', caption);
+    }
 
+    // 2. Word hujjatni yuborish
+    const buffer = await buildDocx({ client, extra, arch, eng, devs });
     const filename = `audit_${(client?.fullName || 'report').replace(/\s+/g, '_')}_${Date.now()}.docx`;
     const caption = `📋 Energiya Audit Xulosasi\n👤 ${client?.fullName}\n📍 ${client?.address}\n📅 ${extra?.auditDate}\n🔢 №${extra?.docNumber}`;
 
@@ -581,11 +574,7 @@ export default async function handler(req, res) {
     }), filename);
     formData.append('caption', caption);
 
-    const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
-      method: 'POST',
-      body: formData,
-    });
-
+    const tgRes = await fetch(`${TG}/sendDocument`, { method: 'POST', body: formData });
     const tgData = await tgRes.json();
     if (!tgData.ok) throw new Error(tgData.description || 'Telegram xatolik');
 
