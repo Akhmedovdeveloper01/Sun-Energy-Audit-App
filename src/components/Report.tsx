@@ -113,9 +113,9 @@ const lbl: React.CSSProperties = { fontSize: '12px', color: '#555', marginBottom
 type TabId = 'summary' | 'arch' | 'dev' | 'doc';
 const TABS: { id: TabId; label: string }[] = [
   { id: 'summary', label: '📊 Xulosa' },
-  { id: 'arch',    label: '🏗 Arxitektura' },
-  { id: 'dev',     label: '💡 Qurilmalar' },
-  { id: 'doc',     label: '📄 Hujjat' },
+  { id: 'arch', label: '🏗 Arxitektura' },
+  { id: 'dev', label: '💡 Qurilmalar' },
+  { id: 'doc', label: '📄 Hujjat' },
 ];
 
 export default function Report({ data }: ReportProps) {
@@ -124,13 +124,13 @@ export default function Report({ data }: ReportProps) {
   const [tab, setTab] = useState<TabId>('summary');
 
   const [docNumber, setDocNumber] = useState('');
-  const [formDate, setFormDate]   = useState(new Date().toLocaleDateString('uz-UZ'));
+  const [formDate, setFormDate] = useState(new Date().toLocaleDateString('uz-UZ'));
   const [auditDate, setAuditDate] = useState(new Date().toLocaleDateString('uz-UZ'));
   const [arch, setArch] = useState<ArchRow[]>(DEFAULT_ARCH);
   const [devs, setDevs] = useState<DevRow[]>([newDev(1)]);
   const [generalPhotos, setGeneralPhotos] = useState<{ file: File; preview: string }[]>([]);
   const generalFileRef = useRef<HTMLInputElement>(null);
-  const devFileRefs    = useRef<(HTMLInputElement | null)[]>([]);
+  const devFileRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleGeneralPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -156,22 +156,22 @@ export default function Report({ data }: ReportProps) {
       return { ...d, photos: d.photos.filter((_, pi) => pi !== photoIdx) };
     }));
   };
-  const openDevCamera  = (i: number) => { const r = devFileRefs.current[i]; if (r) { r.setAttribute('capture', 'environment'); r.click(); } };
+  const openDevCamera = (i: number) => { const r = devFileRefs.current[i]; if (r) { r.setAttribute('capture', 'environment'); r.click(); } };
   const openDevGallery = (i: number) => { const r = devFileRefs.current[i]; if (r) { r.removeAttribute('capture'); r.click(); } };
 
-  const updateArch    = (i: number, k: keyof ArchRow, v: string) => setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
+  const updateArch = (i: number, k: keyof ArchRow, v: string) => setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
   const updateDevName = (i: number, v: string) => setDevs(p => p.map((r, idx) => idx === i ? { ...r, name: v } : r));
-  const updateDev     = (i: number, k: keyof DevRow, v: string) => {
+  const updateDev = (i: number, k: keyof DevRow, v: string) => {
     setDevs(p => p.map((r, idx) => {
       if (idx !== i) return r;
       const n = { ...r, [k]: parseFloat(v) || 0 };
       n.totalKw = parseFloat((n.watt * n.count / 1000).toFixed(3));
-      n.dayKw   = parseFloat((n.totalKw * n.hours).toFixed(2));
+      n.dayKw = parseFloat((n.totalKw * n.hours).toFixed(2));
       n.monthKw = parseFloat((n.dayKw * 31).toFixed(2));
       return n;
     }));
   };
-  const addDev    = () => setDevs(p => [...p, newDev(p.length + 1)]);
+  const addDev = () => setDevs(p => [...p, newDev(p.length + 1)]);
   const removeDev = (i: number) => setDevs(p => p.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, num: idx + 1 })));
 
   // ─── Yuborish ─────────────────────────────────────────────────────────────
@@ -217,14 +217,27 @@ export default function Report({ data }: ReportProps) {
         }),
       });
 
-      const result = JSON.parse(await res.text());
-      if (!res.ok || !result.ok) throw new Error(result.error || `Server xatosi (${res.status})`);
+      const text = await res.text();
+      console.log('Server raw response:', text);
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error(`JSON parse xato. Server javobi: ${text.substring(0, 200)}`);
+      }
+      if (!res.ok || !result.ok) throw new Error(result.error || result.stack || `Server xatosi ${res.status}: ${text.substring(0, 100)}`);
+
+
+      // const result = JSON.parse(await res.text());
+      // if (!res.ok || !result.ok) throw new Error(result.error || `Server xatosi (${res.status})`);
 
       const totalPhotos = generalPhotosB64.length + devsWithPhotos.reduce((s, d) => s + d.photos.length, 0);
       hapticImpact('heavy');
+
       showAlert(`✅ Hujjat${totalPhotos > 0 ? ` va ${totalPhotos} ta rasm` : ''} chatga yuborildi!`);
     } catch (e: any) {
-      showAlert(`❌ Xatolik: ${e.message}`);
+      // showAlert(`❌ Xatolik: ${e.message}`);
+      showAlert(`❌ Xatolik: ${JSON.stringify(e.message)} | ${e.stack?.split('\n')[0] || ''}`);
     } finally {
       setIsGenerating(false);
     }
