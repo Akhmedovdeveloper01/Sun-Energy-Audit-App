@@ -32,7 +32,6 @@ const newDev = (num: number): DevRow => ({
 
 // ─── DevPhotoBlock — component tashqarida (re-render muammosini oldini oladi) ──
 interface DevPhotoBlockProps {
-  devIdx: number;
   dev: DevRow;
   fileRef: (el: HTMLInputElement | null) => void;
   onCamera: () => void;
@@ -41,7 +40,7 @@ interface DevPhotoBlockProps {
   onRemove: (photoIdx: number) => void;
 }
 
-function DevPhotoBlock({ devIdx, dev, fileRef, onCamera, onGallery, onPhotoSelect, onRemove }: DevPhotoBlockProps) {
+function DevPhotoBlock({ dev, fileRef, onCamera, onGallery, onPhotoSelect, onRemove }: DevPhotoBlockProps) {
   return (
     <div style={{ marginBottom: '10px', padding: '10px', background: '#fafafa', borderRadius: '8px', border: '1px dashed #ccc' }}>
       <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', fontWeight: 600 }}>
@@ -351,7 +350,6 @@ export default function Report({ data }: ReportProps) {
 
               {/* Qurilma rasmlari */}
               <DevPhotoBlock
-                devIdx={i}
                 dev={row}
                 fileRef={el => { devFileRefs.current[i] = el; }}
                 onCamera={() => openDevCamera(i)}
