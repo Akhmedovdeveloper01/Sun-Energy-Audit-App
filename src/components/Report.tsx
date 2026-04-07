@@ -7,7 +7,7 @@ interface ReportProps {
 }
 
 interface ArchRow { name: string; desc: string; area: string; value: string }
-interface EngRow { type: string; desc: string; note: string }
+// interface EngRow { type: string; desc: string; note: string }
 interface DevRow {
   num: number; name: string; watt: number; count: number;
   totalKw: number; hours: number; dayKw: number; monthKw: number;
@@ -25,16 +25,16 @@ const DEFAULT_ARCH: ArchRow[] = [
   { name: 'Isitilayotgan xonalar (umumiy maydon)', value: "", desc: '10 xonali 1 qavatli turar joy', area: '545' },
 ];
 
-const DEFAULT_ENG: EngRow[] = [
-  { type: 'Isitish tizimi', desc: '3 ta metall gaz, temir truba', note: '' },
-  { type: "Issiq suv ta'minoti", desc: '2 kVt lik Royal elektir suv isitish', note: '' },
-  { type: 'Sovitish tizimi', desc: '2 ta konditsaner, A sinf', note: '' },
-  { type: 'Yoritish tizimi', desc: '44 ta LED lampa, (5 Vt dan 40 Vt gacha', note: '' },
-  { type: 'Maishiy elektr uskunalari', desc: 'Muzlatgich 2 ta, 1 ta Televezor, kir moshina', note: '' },
-  { type: "Suv ta'minoti", desc: "Markazlashgan suv tarmog'i", note: '' },
-  { type: 'Shamollatish', desc: 'Tabiy shamollatish', note: '' },
-  { type: 'Elektr nasoslar', desc: '1 ta 0,55 kVt', note: '' },
-];
+// const DEFAULT_ENG: EngRow[] = [
+//   { type: 'Isitish tizimi', desc: '3 ta metall gaz, temir truba', note: '' },
+//   { type: "Issiq suv ta'minoti", desc: '2 kVt lik Royal elektir suv isitish', note: '' },
+//   { type: 'Sovitish tizimi', desc: '2 ta konditsaner, A sinf', note: '' },
+//   { type: 'Yoritish tizimi', desc: '44 ta LED lampa, (5 Vt dan 40 Vt gacha', note: '' },
+//   { type: 'Maishiy elektr uskunalari', desc: 'Muzlatgich 2 ta, 1 ta Televezor, kir moshina', note: '' },
+//   { type: "Suv ta'minoti", desc: "Markazlashgan suv tarmog'i", note: '' },
+//   { type: 'Shamollatish', desc: 'Tabiy shamollatish', note: '' },
+//   { type: 'Elektr nasoslar', desc: '1 ta 0,55 kVt', note: '' },
+// ];
 
 const newDev = (num: number): DevRow => ({
   num, name: '', watt: 0, count: 1,
@@ -62,7 +62,7 @@ export default function Report({ data }: ReportProps) {
   const [formDate, setFormDate] = useState(new Date().toLocaleDateString('uz-UZ'));
   const [auditDate, setAuditDate] = useState(new Date().toLocaleDateString('uz-UZ'));
   const [arch, setArch] = useState<ArchRow[]>(DEFAULT_ARCH);
-  const [eng, setEng] = useState<EngRow[]>(DEFAULT_ENG);
+  // const [eng, setEng] = useState<EngRow[]>(DEFAULT_ENG);
   const [devs, setDevs] = useState<DevRow[]>([newDev(1)]);
 
   // Umumiy rasmlar (Hujjat tabida)
@@ -120,8 +120,8 @@ export default function Report({ data }: ReportProps) {
   const updateArch = (i: number, k: keyof ArchRow, v: string) =>
     setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
 
-  const updateEng = (i: number, k: keyof EngRow, v: string) =>
-    setEng(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
+  // const updateEng = (i: number, k: keyof EngRow, v: string) =>
+  //   setEng(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
 
   const updateDevName = (i: number, v: string) =>
     setDevs(p => p.map((r, idx) => idx === i ? { ...r, name: v } : r));
@@ -195,7 +195,7 @@ export default function Report({ data }: ReportProps) {
           chatId,
           client: data.client,
           extra: { docNumber: docNumber || '001', formDate, auditDate },
-          arch, eng,
+          // arch, eng,
           devs: devsWithPhotos,
           photos: generalPhotosB64,
         }),
@@ -219,7 +219,7 @@ export default function Report({ data }: ReportProps) {
   const tabs = [
     { id: 'summary', label: '📊 Xulosa' },
     { id: 'arch', label: '🏗 Arxitektura' },
-    { id: 'eng', label: '⚙️ Muhandislik' },
+    // { id: 'eng', label: '⚙️ Muhandislik' },
     { id: 'dev', label: '💡 Qurilmalar' },
     { id: 'doc', label: '📄 Hujjat' },
   ] as const;
@@ -337,7 +337,7 @@ export default function Report({ data }: ReportProps) {
       )}
 
       {/* Muhandislik */}
-      {tab === 'eng' && (
+      {/* {tab === 'eng' && (
         <div style={sec}>
           <h3 style={{ margin: '0 0 14px' }}>⚙️ 2.2. Muhandislik tizimlari</h3>
           {eng.map((row, i) => (
@@ -354,7 +354,7 @@ export default function Report({ data }: ReportProps) {
             </div>
           ))}
         </div>
-      )}
+      )} */}
 
       {/* Qurilmalar */}
       {tab === 'dev' && (
