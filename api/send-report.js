@@ -325,8 +325,7 @@ function cell(text, opts = {}) {
 
 function heading(text, sz = 24) {
   return new Paragraph({
-    alignment: AlignmentType.CENTER,
-    spacing: { before: 140, after: 80 },
+    alignment: AlignmentType.CENTER, spacing: { before: 140, after: 80 },
     children: [new TextRun({ text, bold: true, size: sz, font: 'Times New Roman' })],
   });
 }
@@ -347,8 +346,7 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
 
   function headerTable() {
     return new Table({
-      width: { size: W, type: WidthType.DXA },
-      columnWidths: [5638, 4000],
+      width: { size: W, type: WidthType.DXA }, columnWidths: [5638, 4000],
       rows: [
         new TableRow({ children: [
           cell('Energiya auditorlik xulosasi shakllantirirlgan sana', { width: 5638, bold: true }),
@@ -385,8 +383,7 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
       ['Foydalanish maqsadi', client.usagePurpose || ''],
     ];
     return new Table({
-      width: { size: W, type: WidthType.DXA },
-      columnWidths: [4000, 5638],
+      width: { size: W, type: WidthType.DXA }, columnWidths: [4000, 5638],
       rows: rows.map(([l, v]) => new TableRow({ children: [
         cell(l, { width: 4000, bold: true }),
         cell(v, { width: 5638 }),
@@ -518,7 +515,10 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
         spacer(), devTable(), spacer(),
         new Paragraph({
           spacing: { before: 60, after: 60 },
-          children: [new TextRun({ text: "Izoh: O'rtacha oylik EE iste'moliga mos keladigan ko'rsatgichlar", size: 18, font: 'Times New Roman', italics: true })],
+          children: [new TextRun({
+            text: "Izoh: O'rtacha oylik EE iste'moliga mos keladigan ko'rsatgichlar",
+            size: 18, font: 'Times New Roman', italics: true,
+          })],
         }),
       ],
     }],
@@ -527,15 +527,15 @@ async function buildDocx({ client, extra, arch, eng, devs }) {
   return Packer.toBuffer(doc);
 }
 
-// ─── Rasmni Telegram ga yuborish ─────────────────────────────────────────────
-async function sendPhoto(chatId, photoBase64, mime, caption) {
-  const blob = new Blob([Buffer.from(photoBase64, 'base64')], { type: mime });
+// ─── Rasm yuborish ────────────────────────────────────────────────────────────
+async function sendPhoto(chatId, base64, mime, caption) {
+  const blob = new Blob([Buffer.from(base64, 'base64')], { type: mime || 'image/jpeg' });
   const fd = new FormData();
   fd.append('chat_id', String(chatId));
   fd.append('photo', blob, 'photo.jpg');
   if (caption) fd.append('caption', caption);
-  const res = await fetch(`${TG}/sendPhoto`, { method: 'POST', body: fd });
-  return res.json();
+  const r = await fetch(`${TG}/sendPhoto`, { method: 'POST', body: fd });
+  return r.json();
 }
 
 // ─── Vercel Handler ───────────────────────────────────────────────────────────
@@ -548,33 +548,44 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { chatId, client, extra, arch, eng, devs, photos = [] } = req.body;
+    const { chatId, client, extra, arch, eng, devs = [], photos = [] } = req.body;
 
     if (!BOT_TOKEN) throw new Error("BOT_TOKEN Vercel Environment Variables ga qo'shilmagan");
     if (!chatId) throw new Error('chatId topilmadi');
 
-    // 1. Rasmlarni yuborish (har birini alohida)
+    // 1. Umumiy rasmlar
     for (let i = 0; i < photos.length; i++) {
-      const photo = photos[i];
       const caption = i === 0
-        ? `📸 Ob'ekt rasmlari\n👤 ${client?.fullName}\n📍 ${client?.address}` 
+        ? `📸 Ob'ekt rasmlari\n👤 ${client?.fullName}\n📍 ${client?.address}`
         : null;
-      await sendPhoto(chatId, photo.base64, photo.mime || 'image/jpeg', caption);
+      await sendPhoto(chatId, photos[i].base64, photos[i].mime, caption);
     }
 
-    // 2. Word hujjatni yuborish
+    // 2. Har bir qurilma rasmlari
+    for (const dev of devs) {
+      if (dev.photos && dev.photos.length > 0) {
+        for (let i = 0; i < dev.photos.length; i++) {
+          const caption = i === 0
+            ? `🔌 ${dev.num}. ${dev.name || 'Qurilma'} — ${dev.watt}Vt × ${dev.count} dona`
+            : null;
+          await sendPhoto(chatId, dev.photos[i].base64, dev.photos[i].mime, caption);
+        }
+      }
+    }
+
+    // 3. Word hujjat
     const buffer = await buildDocx({ client, extra, arch, eng, devs });
     const filename = `audit_${(client?.fullName || 'report').replace(/\s+/g, '_')}_${Date.now()}.docx`;
     const caption = `📋 Energiya Audit Xulosasi\n👤 ${client?.fullName}\n📍 ${client?.address}\n📅 ${extra?.auditDate}\n🔢 №${extra?.docNumber}`;
 
-    const formData = new FormData();
-    formData.append('chat_id', String(chatId));
-    formData.append('document', new Blob([buffer], {
+    const fd = new FormData();
+    fd.append('chat_id', String(chatId));
+    fd.append('document', new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     }), filename);
-    formData.append('caption', caption);
+    fd.append('caption', caption);
 
-    const tgRes = await fetch(`${TG}/sendDocument`, { method: 'POST', body: formData });
+    const tgRes = await fetch(`${TG}/sendDocument`, { method: 'POST', body: fd });
     const tgData = await tgRes.json();
     if (!tgData.ok) throw new Error(tgData.description || 'Telegram xatolik');
 
