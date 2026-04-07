@@ -30,8 +30,28 @@ const newDev = (num: number): DevRow => ({
   photos: [],
 });
 
-// Bot token — rasmlarni to'g'ridan Telegram ga yuborish uchun
-const BOT_TOKEN = import.meta.env.VITE_BOT_TOKEN;
+// ─── Rasmni resize qilish (canvas orqali) ────────────────────────────────────
+const resizeImage = (file: File, maxSize = 800, quality = 0.75): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxSize || height > maxSize) {
+        if (width > height) { height = Math.round(height * maxSize / width); width = maxSize; }
+        else { width = Math.round(width * maxSize / height); height = maxSize; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      const base64 = canvas.toDataURL('image/jpeg', quality).split(',')[1];
+      resolve(base64);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 
 // ─── DevPhotoBlock ────────────────────────────────────────────────────────────
 interface DevPhotoBlockProps {
@@ -49,7 +69,6 @@ function DevPhotoBlock({ dev, fileRef, onCamera, onGallery, onPhotoSelect, onRem
       <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', fontWeight: 600 }}>
         📸 Qurilma rasmlari ({dev.photos.length}/5)
       </div>
-
       {dev.photos.length > 0 && (
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
           {dev.photos.map((p, pi) => (
@@ -69,41 +88,27 @@ function DevPhotoBlock({ dev, fileRef, onCamera, onGallery, onPhotoSelect, onRem
           ))}
         </div>
       )}
-
       {dev.photos.length < 5 && (
         <div style={{ display: 'flex', gap: '6px' }}>
           <button onClick={onCamera} style={{
-            flex: 1, padding: '8px 4px',
-            background: '#e3f2fd', border: '1px solid #90caf9',
-            borderRadius: '8px', cursor: 'pointer',
-            fontSize: '12px', color: '#1565c0', fontWeight: 600,
+            flex: 1, padding: '8px 4px', background: '#e3f2fd', border: '1px solid #90caf9',
+            borderRadius: '8px', cursor: 'pointer', fontSize: '12px', color: '#1565c0', fontWeight: 600,
           }}>📷 Kamera</button>
           <button onClick={onGallery} style={{
-            flex: 1, padding: '8px 4px',
-            background: '#f3e5f5', border: '1px solid #ce93d8',
-            borderRadius: '8px', cursor: 'pointer',
-            fontSize: '12px', color: '#6a1b9a', fontWeight: 600,
+            flex: 1, padding: '8px 4px', background: '#f3e5f5', border: '1px solid #ce93d8',
+            borderRadius: '8px', cursor: 'pointer', fontSize: '12px', color: '#6a1b9a', fontWeight: 600,
           }}>🖼 Galereya</button>
         </div>
       )}
-
       <input ref={fileRef} type="file" accept="image/*" multiple
         style={{ display: 'none' }} onChange={onPhotoSelect} />
     </div>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const inp: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', borderRadius: '8px',
-  border: '1px solid #ccc', fontSize: '14px', boxSizing: 'border-box',
-};
-const sec: React.CSSProperties = {
-  background: '#f9f9f9', borderRadius: '12px', padding: '14px', marginBottom: '14px',
-};
-const lbl: React.CSSProperties = {
-  fontSize: '12px', color: '#555', marginBottom: '4px', display: 'block',
-};
+const inp: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '14px', boxSizing: 'border-box' };
+const sec: React.CSSProperties = { background: '#f9f9f9', borderRadius: '12px', padding: '14px', marginBottom: '14px' };
+const lbl: React.CSSProperties = { fontSize: '12px', color: '#555', marginBottom: '4px', display: 'block' };
 
 type TabId = 'summary' | 'arch' | 'dev' | 'doc';
 const TABS: { id: TabId; label: string }[] = [
@@ -123,12 +128,10 @@ export default function Report({ data }: ReportProps) {
   const [auditDate, setAuditDate] = useState(new Date().toLocaleDateString('uz-UZ'));
   const [arch, setArch] = useState<ArchRow[]>(DEFAULT_ARCH);
   const [devs, setDevs] = useState<DevRow[]>([newDev(1)]);
-
   const [generalPhotos, setGeneralPhotos] = useState<{ file: File; preview: string }[]>([]);
   const generalFileRef = useRef<HTMLInputElement>(null);
   const devFileRefs    = useRef<(HTMLInputElement | null)[]>([]);
 
-  // ─── Umumiy rasmlar ───────────────────────────────────────────────────────
   const handleGeneralPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setGeneralPhotos(prev => [...prev, ...files.map(f => ({ file: f, preview: URL.createObjectURL(f) }))].slice(0, 10));
@@ -138,7 +141,6 @@ export default function Report({ data }: ReportProps) {
     setGeneralPhotos(prev => { URL.revokeObjectURL(prev[i].preview); return prev.filter((_, idx) => idx !== i); });
   };
 
-  // ─── Qurilma rasmlari ─────────────────────────────────────────────────────
   const handleDevPhoto = (devIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setDevs(prev => prev.map((d, i) => i === devIdx
@@ -157,7 +159,6 @@ export default function Report({ data }: ReportProps) {
   const openDevCamera  = (i: number) => { const r = devFileRefs.current[i]; if (r) { r.setAttribute('capture', 'environment'); r.click(); } };
   const openDevGallery = (i: number) => { const r = devFileRefs.current[i]; if (r) { r.removeAttribute('capture'); r.click(); } };
 
-  // ─── Dev update ───────────────────────────────────────────────────────────
   const updateArch    = (i: number, k: keyof ArchRow, v: string) => setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
   const updateDevName = (i: number, v: string) => setDevs(p => p.map((r, idx) => idx === i ? { ...r, name: v } : r));
   const updateDev     = (i: number, k: keyof DevRow, v: string) => {
@@ -173,20 +174,6 @@ export default function Report({ data }: ReportProps) {
   const addDev    = () => setDevs(p => [...p, newDev(p.length + 1)]);
   const removeDev = (i: number) => setDevs(p => p.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, num: idx + 1 })));
 
-  // ─── Rasmni to'g'ridan Telegram ga yuborish ───────────────────────────────
-  const sendPhotoToTelegram = async (chatId: number, file: File, caption?: string) => {
-    const fd = new FormData();
-    fd.append('chat_id', String(chatId));
-    fd.append('photo', file, file.name);
-    if (caption) fd.append('caption', caption);
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-      method: 'POST',
-      body: fd,
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(`Rasm yuborishda xato: ${data.description}`);
-  };
-
   // ─── Yuborish ─────────────────────────────────────────────────────────────
   const sendToChat = async () => {
     const chatId = tg?.initDataUnsafe?.user?.id;
@@ -194,32 +181,29 @@ export default function Report({ data }: ReportProps) {
 
     setIsGenerating(true);
     try {
-      // 1. Umumiy rasmlar — to'g'ridan Telegram ga
-      for (let i = 0; i < generalPhotos.length; i++) {
-        const caption = i === 0
-          ? `📸 Ob'ekt rasmlari\n👤 ${data.client.fullName}\n📍 ${data.client.address}`
-          : undefined;
-        await sendPhotoToTelegram(chatId, generalPhotos[i].file, caption);
-      }
+      // 1. Umumiy rasmlarni resize qilib base64 ga
+      const generalPhotosB64 = await Promise.all(
+        generalPhotos.map(async p => ({
+          base64: await resizeImage(p.file, 800, 0.75),
+          name: p.file.name,
+        }))
+      );
 
-      // 2. Har bir qurilma rasmlari — to'g'ridan Telegram ga
-      for (const dev of devs) {
-        if (dev.photos.length > 0) {
-          for (let i = 0; i < dev.photos.length; i++) {
-            const caption = i === 0
-              ? `🔌 ${dev.num}. ${dev.name || 'Qurilma'}\n⚡ ${dev.watt} Vt × ${dev.count} dona\n🕐 ${dev.hours} soat/kun`
-              : undefined;
-            await sendPhotoToTelegram(chatId, dev.photos[i].file, caption);
-          }
-        }
-      }
+      // 2. Qurilma rasmlarini resize qilib base64 ga
+      const devsWithPhotos = await Promise.all(
+        devs.map(async d => ({
+          num: d.num, name: d.name, watt: d.watt, count: d.count,
+          totalKw: d.totalKw, hours: d.hours, dayKw: d.dayKw, monthKw: d.monthKw,
+          photos: await Promise.all(
+            d.photos.map(async p => ({
+              base64: await resizeImage(p.file, 800, 0.75),
+              name: p.file.name,
+            }))
+          ),
+        }))
+      );
 
-      // 3. Word hujjat — Vercel orqali (rasmsiz, kichik payload)
-      const devsData = devs.map(d => ({
-        num: d.num, name: d.name, watt: d.watt, count: d.count,
-        totalKw: d.totalKw, hours: d.hours, dayKw: d.dayKw, monthKw: d.monthKw,
-      }));
-
+      // 3. Vercel ga yuborish (rasmlar resize qilingan, hajmi kichik)
       const res = await fetch('https://sunenergyaudit.vercel.app/api/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -228,15 +212,15 @@ export default function Report({ data }: ReportProps) {
           client: data.client,
           extra: { docNumber: docNumber || '001', formDate, auditDate },
           arch,
-          devs: devsData,
-          photos: [], // rasmlar allaqachon yuborildi
+          devs: devsWithPhotos,
+          photos: generalPhotosB64,
         }),
       });
 
       const result = JSON.parse(await res.text());
       if (!res.ok || !result.ok) throw new Error(result.error || `Server xatosi (${res.status})`);
 
-      const totalPhotos = generalPhotos.length + devs.reduce((s, d) => s + d.photos.length, 0);
+      const totalPhotos = generalPhotosB64.length + devsWithPhotos.reduce((s, d) => s + d.photos.length, 0);
       hapticImpact('heavy');
       showAlert(`✅ Hujjat${totalPhotos > 0 ? ` va ${totalPhotos} ta rasm` : ''} chatga yuborildi!`);
     } catch (e: any) {
@@ -250,8 +234,6 @@ export default function Report({ data }: ReportProps) {
 
   return (
     <div style={{ padding: '12px', fontFamily: 'sans-serif', maxWidth: 480, margin: '0 auto' }}>
-
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -260,13 +242,10 @@ export default function Report({ data }: ReportProps) {
             fontWeight: tab === t.id ? 700 : 400,
             background: tab === t.id ? '#667eea' : '#f0f0f0',
             color: tab === t.id ? 'white' : '#333',
-          }}>
-            {t.label}
-          </button>
+          }}>{t.label}</button>
         ))}
       </div>
 
-      {/* Xulosa */}
       {tab === 'summary' && <>
         <div style={sec}>
           <h3 style={{ margin: '0 0 10px' }}>👤 Mijoz</h3>
@@ -279,7 +258,6 @@ export default function Report({ data }: ReportProps) {
         </p>
       </>}
 
-      {/* Arxitektura */}
       {tab === 'arch' && (
         <div style={sec}>
           <h3 style={{ margin: '0 0 14px' }}>🏗 2.1. Arxitektura va konstruktsiya</h3>
@@ -288,35 +266,25 @@ export default function Report({ data }: ReportProps) {
               <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 600, color: '#333' }}>{row.name}</p>
               <label style={lbl}>Tavsif (material, turi)</label>
               <input style={{ ...inp, marginBottom: '6px' }} value={row.desc}
-                onChange={e => updateArch(i, 'desc', e.target.value)}
-                placeholder={`masalan: ${row.desc}`} />
+                onChange={e => updateArch(i, 'desc', e.target.value)} placeholder={`masalan: ${row.desc}`} />
               <label style={lbl}>Maydoni / qiymati (m²)</label>
               <input style={inp} value={row.area}
-                onChange={e => updateArch(i, 'area', e.target.value)}
-                placeholder={`masalan: ${row.area}`} />
+                onChange={e => updateArch(i, 'area', e.target.value)} placeholder={`masalan: ${row.area}`} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Qurilmalar */}
       {tab === 'dev' && (
         <div style={sec}>
           <h3 style={{ margin: '0 0 14px' }}>💡 2.3. Elektr qurilmalar</h3>
           {devs.map((row, i) => (
-            <div key={i} style={{
-              background: 'white', borderRadius: '10px', padding: '12px',
-              marginBottom: '10px', border: '1px solid #e0e0e0',
-            }}>
+            <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '12px', marginBottom: '10px', border: '1px solid #e0e0e0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <strong style={{ fontSize: '13px' }}>#{row.num}</strong>
-                <button onClick={() => removeDev(i)} style={{
-                  padding: '4px 10px', background: '#ffebee', border: '1px solid #ef9a9a',
-                  borderRadius: '6px', cursor: 'pointer', fontSize: '12px', color: '#c62828',
-                }}>✕ O'chirish</button>
+                <button onClick={() => removeDev(i)} style={{ padding: '4px 10px', background: '#ffebee', border: '1px solid #ef9a9a', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', color: '#c62828' }}>✕ O'chirish</button>
               </div>
 
-              {/* Qurilma rasmlari */}
               <DevPhotoBlock
                 dev={row}
                 fileRef={el => { devFileRefs.current[i] = el; }}
@@ -328,45 +296,34 @@ export default function Report({ data }: ReportProps) {
 
               <label style={lbl}>Qurilma nomi</label>
               <input style={{ ...inp, marginBottom: '8px' }} value={row.name}
-                onChange={e => updateDevName(i, e.target.value)}
-                placeholder="masalan: Muzlatgich" />
+                onChange={e => updateDevName(i, e.target.value)} placeholder="masalan: Muzlatgich" />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <div>
                   <label style={lbl}>Quvvati (Vt)</label>
-                  <input type="number" style={inp} value={row.watt || ''}
-                    onChange={e => updateDev(i, 'watt', e.target.value)} placeholder="0" />
+                  <input type="number" style={inp} value={row.watt || ''} onChange={e => updateDev(i, 'watt', e.target.value)} placeholder="0" />
                 </div>
                 <div>
                   <label style={lbl}>Soni (dona)</label>
-                  <input type="number" style={inp} value={row.count || ''}
-                    onChange={e => updateDev(i, 'count', e.target.value)} placeholder="1" />
+                  <input type="number" style={inp} value={row.count || ''} onChange={e => updateDev(i, 'count', e.target.value)} placeholder="1" />
                 </div>
                 <div>
                   <label style={lbl}>Ishlash vaqti (soat/kun)</label>
-                  <input type="number" style={inp} value={row.hours || ''}
-                    onChange={e => updateDev(i, 'hours', e.target.value)} placeholder="0" />
+                  <input type="number" style={inp} value={row.hours || ''} onChange={e => updateDev(i, 'hours', e.target.value)} placeholder="0" />
                 </div>
                 <div>
                   <label style={lbl}>Umumiy quvvat (kVt)</label>
-                  <input style={{ ...inp, background: '#f5f5f5', color: '#666' }}
-                    value={row.totalKw} readOnly />
+                  <input style={{ ...inp, background: '#f5f5f5', color: '#666' }} value={row.totalKw} readOnly />
                 </div>
               </div>
 
-              <div style={{
-                marginTop: '8px', padding: '8px', background: '#e8f5e9',
-                borderRadius: '6px', fontSize: '12px', color: '#2e7d32',
-              }}>
+              <div style={{ marginTop: '8px', padding: '8px', background: '#e8f5e9', borderRadius: '6px', fontSize: '12px', color: '#2e7d32' }}>
                 Kunlik: <strong>{row.dayKw} kVt*soat</strong> &nbsp;|&nbsp; Oylik: <strong>{row.monthKw} kVt*soat</strong>
               </div>
             </div>
           ))}
 
-          <button onClick={addDev} style={{
-            padding: '8px 16px', background: '#e8f5e9', border: '1px solid #a5d6a7',
-            borderRadius: '8px', cursor: 'pointer', fontSize: '13px', color: '#2e7d32',
-          }}>
+          <button onClick={addDev} style={{ padding: '8px 16px', background: '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', color: '#2e7d32' }}>
             + Qurilma qo'shish
           </button>
           <div style={{ marginTop: '12px', padding: '10px', background: '#fff3e0', borderRadius: '8px', fontSize: '14px' }}>
@@ -375,64 +332,41 @@ export default function Report({ data }: ReportProps) {
         </div>
       )}
 
-      {/* Hujjat */}
       {tab === 'doc' && (
         <div style={sec}>
           <h3 style={{ margin: '0 0 14px' }}>📄 Hujjat ma'lumotlari</h3>
 
           <label style={lbl}>Hujjat raqami</label>
-          <input style={{ ...inp, marginBottom: '10px' }} value={docNumber}
-            onChange={e => setDocNumber(e.target.value)} placeholder="masalan: 020" />
+          <input style={{ ...inp, marginBottom: '10px' }} value={docNumber} onChange={e => setDocNumber(e.target.value)} placeholder="masalan: 020" />
 
           <label style={lbl}>Shakllantirirlgan sana</label>
-          <input style={{ ...inp, marginBottom: '10px' }} value={formDate}
-            onChange={e => setFormDate(e.target.value)} placeholder="KK.OO.YYYY" />
+          <input style={{ ...inp, marginBottom: '10px' }} value={formDate} onChange={e => setFormDate(e.target.value)} placeholder="KK.OO.YYYY" />
 
           <label style={lbl}>Audit sanasi</label>
-          <input style={{ ...inp, marginBottom: '16px' }} value={auditDate}
-            onChange={e => setAuditDate(e.target.value)} placeholder="KK.OO.YYYY" />
+          <input style={{ ...inp, marginBottom: '16px' }} value={auditDate} onChange={e => setAuditDate(e.target.value)} placeholder="KK.OO.YYYY" />
 
           {/* Umumiy rasmlar */}
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '10px', color: '#333' }}>
               📸 Umumiy ob'ekt rasmlari ({generalPhotos.length}/10)
             </div>
-
             {generalPhotos.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
                 {generalPhotos.map((p, i) => (
                   <div key={i} style={{ position: 'relative' }}>
-                    <img src={p.preview} alt="" style={{
-                      width: '100%', aspectRatio: '1', objectFit: 'cover',
-                      borderRadius: '8px', border: '1px solid #e0e0e0', display: 'block',
-                    }} />
-                    <button onClick={() => removeGeneralPhoto(i)} style={{
-                      position: 'absolute', top: '4px', right: '4px',
-                      width: '22px', height: '22px',
-                      background: 'rgba(0,0,0,0.65)', color: 'white',
-                      border: 'none', borderRadius: '50%', cursor: 'pointer',
-                      fontSize: '11px', lineHeight: '22px', padding: 0, textAlign: 'center',
-                    }}>✕</button>
+                    <img src={p.preview} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e0e0e0', display: 'block' }} />
+                    <button onClick={() => removeGeneralPhoto(i)} style={{ position: 'absolute', top: '4px', right: '4px', width: '22px', height: '22px', background: 'rgba(0,0,0,0.65)', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '11px', lineHeight: '22px', padding: 0, textAlign: 'center' }}>✕</button>
                   </div>
                 ))}
               </div>
             )}
-
             {generalPhotos.length < 10 && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button onClick={() => { if (generalFileRef.current) { generalFileRef.current.setAttribute('capture', 'environment'); generalFileRef.current.click(); } }} style={{
-                  padding: '12px 8px', background: '#e3f2fd', border: '1px solid #90caf9',
-                  borderRadius: '10px', cursor: 'pointer', fontSize: '14px', color: '#1565c0', fontWeight: 600,
-                }}>📷 Kamera</button>
-                <button onClick={() => { if (generalFileRef.current) { generalFileRef.current.removeAttribute('capture'); generalFileRef.current.click(); } }} style={{
-                  padding: '12px 8px', background: '#f3e5f5', border: '1px solid #ce93d8',
-                  borderRadius: '10px', cursor: 'pointer', fontSize: '14px', color: '#6a1b9a', fontWeight: 600,
-                }}>🖼 Galereya</button>
+                <button onClick={() => { if (generalFileRef.current) { generalFileRef.current.setAttribute('capture', 'environment'); generalFileRef.current.click(); } }} style={{ padding: '12px 8px', background: '#e3f2fd', border: '1px solid #90caf9', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', color: '#1565c0', fontWeight: 600 }}>📷 Kamera</button>
+                <button onClick={() => { if (generalFileRef.current) { generalFileRef.current.removeAttribute('capture'); generalFileRef.current.click(); } }} style={{ padding: '12px 8px', background: '#f3e5f5', border: '1px solid #ce93d8', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', color: '#6a1b9a', fontWeight: 600 }}>🖼 Galereya</button>
               </div>
             )}
-
-            <input ref={generalFileRef} type="file" accept="image/*" multiple
-              style={{ display: 'none' }} onChange={handleGeneralPhoto} />
+            <input ref={generalFileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleGeneralPhoto} />
           </div>
 
           <button onClick={sendToChat} disabled={isGenerating} style={{
@@ -444,9 +378,8 @@ export default function Report({ data }: ReportProps) {
           }}>
             {isGenerating ? '⏳ Yuborilmoqda...' : '📨 Hujjat va rasmlarni yuborish'}
           </button>
-
           <p style={{ marginTop: '10px', fontSize: '12px', color: '#888', textAlign: 'center' }}>
-            Rasmlar va Word hujjat chatga yuboriladi
+            Rasmlar hujjat ichiga qo'shilib chatga yuboriladi
           </p>
         </div>
       )}
