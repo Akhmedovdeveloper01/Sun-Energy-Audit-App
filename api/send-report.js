@@ -266,11 +266,19 @@ async function buildDocx({ client, extra, arch, eng, devs, photos }) {
   if (devsWithPhotos.length > 0) {
     children.push(heading('IV. Qurilmalar rasmlari', 22));
     children.push(spacer());
+    // for (const dev of devsWithPhotos) {
+    //   const label = `${dev.num}. ${dev.name || 'Qurilma'} — ${dev.watt} Vt × ${dev.count} dona`;
+    //   const photosWithCaption = dev.photos.map((p, i) => ({
+    //     ...p,
+    //     caption: i === 0 ? label : '',
+    //   }));
+    //   children.push(...buildPhotoGrid(photosWithCaption, label));
+    // }
     for (const dev of devsWithPhotos) {
       const label = `${dev.num}. ${dev.name || 'Qurilma'} — ${dev.watt} Vt × ${dev.count} dona`;
       const photosWithCaption = dev.photos.map((p, i) => ({
         ...p,
-        caption: i === 0 ? label : '',
+        caption: label, // har bir rasm ostida qurilma nomi
       }));
       children.push(...buildPhotoGrid(photosWithCaption, label));
     }
