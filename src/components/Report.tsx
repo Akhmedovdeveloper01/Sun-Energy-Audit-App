@@ -30,7 +30,10 @@ const newDev = (num: number): DevRow => ({
   photos: [],
 });
 
-// ─── DevPhotoBlock — component tashqarida (re-render muammosini oldini oladi) ──
+// Bot token — rasmlarni to'g'ridan Telegram ga yuborish uchun
+const BOT_TOKEN = import.meta.env.VITE_BOT_TOKEN;
+
+// ─── DevPhotoBlock ────────────────────────────────────────────────────────────
 interface DevPhotoBlockProps {
   dev: DevRow;
   fileRef: (el: HTMLInputElement | null) => void;
@@ -47,7 +50,6 @@ function DevPhotoBlock({ dev, fileRef, onCamera, onGallery, onPhotoSelect, onRem
         📸 Qurilma rasmlari ({dev.photos.length}/5)
       </div>
 
-      {/* Preview */}
       {dev.photos.length > 0 && (
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
           {dev.photos.map((p, pi) => (
@@ -56,57 +58,37 @@ function DevPhotoBlock({ dev, fileRef, onCamera, onGallery, onPhotoSelect, onRem
                 width: '64px', height: '64px', objectFit: 'cover',
                 borderRadius: '8px', border: '1px solid #e0e0e0', display: 'block',
               }} />
-              <button
-                onClick={() => onRemove(pi)}
-                style={{
-                  position: 'absolute', top: '2px', right: '2px',
-                  width: '18px', height: '18px',
-                  background: 'rgba(0,0,0,0.65)', color: 'white',
-                  border: 'none', borderRadius: '50%', cursor: 'pointer',
-                  fontSize: '10px', lineHeight: '18px', padding: 0, textAlign: 'center',
-                }}
-              >✕</button>
+              <button onClick={() => onRemove(pi)} style={{
+                position: 'absolute', top: '2px', right: '2px',
+                width: '18px', height: '18px',
+                background: 'rgba(0,0,0,0.65)', color: 'white',
+                border: 'none', borderRadius: '50%', cursor: 'pointer',
+                fontSize: '10px', lineHeight: '18px', padding: 0, textAlign: 'center',
+              }}>✕</button>
             </div>
           ))}
         </div>
       )}
 
-      {/* Tugmalar */}
       {dev.photos.length < 5 && (
         <div style={{ display: 'flex', gap: '6px' }}>
-          <button
-            onClick={onCamera}
-            style={{
-              flex: 1, padding: '8px 4px',
-              background: '#e3f2fd', border: '1px solid #90caf9',
-              borderRadius: '8px', cursor: 'pointer',
-              fontSize: '12px', color: '#1565c0', fontWeight: 600,
-            }}
-          >
-            📷 Kamera
-          </button>
-          <button
-            onClick={onGallery}
-            style={{
-              flex: 1, padding: '8px 4px',
-              background: '#f3e5f5', border: '1px solid #ce93d8',
-              borderRadius: '8px', cursor: 'pointer',
-              fontSize: '12px', color: '#6a1b9a', fontWeight: 600,
-            }}
-          >
-            🖼 Galereya
-          </button>
+          <button onClick={onCamera} style={{
+            flex: 1, padding: '8px 4px',
+            background: '#e3f2fd', border: '1px solid #90caf9',
+            borderRadius: '8px', cursor: 'pointer',
+            fontSize: '12px', color: '#1565c0', fontWeight: 600,
+          }}>📷 Kamera</button>
+          <button onClick={onGallery} style={{
+            flex: 1, padding: '8px 4px',
+            background: '#f3e5f5', border: '1px solid #ce93d8',
+            borderRadius: '8px', cursor: 'pointer',
+            fontSize: '12px', color: '#6a1b9a', fontWeight: 600,
+          }}>🖼 Galereya</button>
         </div>
       )}
 
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        multiple
-        style={{ display: 'none' }}
-        onChange={onPhotoSelect}
-      />
+      <input ref={fileRef} type="file" accept="image/*" multiple
+        style={{ display: 'none' }} onChange={onPhotoSelect} />
     </div>
   );
 }
@@ -123,9 +105,7 @@ const lbl: React.CSSProperties = {
   fontSize: '12px', color: '#555', marginBottom: '4px', display: 'block',
 };
 
-// ─── Tabs (eng yo'q) ──────────────────────────────────────────────────────────
 type TabId = 'summary' | 'arch' | 'dev' | 'doc';
-
 const TABS: { id: TabId; label: string }[] = [
   { id: 'summary', label: '📊 Xulosa' },
   { id: 'arch',    label: '🏗 Arxitektura' },
@@ -139,40 +119,34 @@ export default function Report({ data }: ReportProps) {
   const [tab, setTab] = useState<TabId>('summary');
 
   const [docNumber, setDocNumber] = useState('');
-  const [formDate, setFormDate] = useState(new Date().toLocaleDateString('uz-UZ'));
+  const [formDate, setFormDate]   = useState(new Date().toLocaleDateString('uz-UZ'));
   const [auditDate, setAuditDate] = useState(new Date().toLocaleDateString('uz-UZ'));
   const [arch, setArch] = useState<ArchRow[]>(DEFAULT_ARCH);
   const [devs, setDevs] = useState<DevRow[]>([newDev(1)]);
 
   const [generalPhotos, setGeneralPhotos] = useState<{ file: File; preview: string }[]>([]);
   const generalFileRef = useRef<HTMLInputElement>(null);
-  const devFileRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const devFileRefs    = useRef<(HTMLInputElement | null)[]>([]);
 
   // ─── Umumiy rasmlar ───────────────────────────────────────────────────────
   const handleGeneralPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const added = files.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
-    setGeneralPhotos(prev => [...prev, ...added].slice(0, 10));
+    setGeneralPhotos(prev => [...prev, ...files.map(f => ({ file: f, preview: URL.createObjectURL(f) }))].slice(0, 10));
     e.target.value = '';
   };
-
   const removeGeneralPhoto = (i: number) => {
-    setGeneralPhotos(prev => {
-      URL.revokeObjectURL(prev[i].preview);
-      return prev.filter((_, idx) => idx !== i);
-    });
+    setGeneralPhotos(prev => { URL.revokeObjectURL(prev[i].preview); return prev.filter((_, idx) => idx !== i); });
   };
 
   // ─── Qurilma rasmlari ─────────────────────────────────────────────────────
   const handleDevPhoto = (devIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const added = files.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
-    setDevs(prev => prev.map((d, i) =>
-      i === devIdx ? { ...d, photos: [...d.photos, ...added].slice(0, 5) } : d
+    setDevs(prev => prev.map((d, i) => i === devIdx
+      ? { ...d, photos: [...d.photos, ...files.map(f => ({ file: f, preview: URL.createObjectURL(f) }))].slice(0, 5) }
+      : d
     ));
     e.target.value = '';
   };
-
   const removeDevPhoto = (devIdx: number, photoIdx: number) => {
     setDevs(prev => prev.map((d, i) => {
       if (i !== devIdx) return d;
@@ -180,25 +154,13 @@ export default function Report({ data }: ReportProps) {
       return { ...d, photos: d.photos.filter((_, pi) => pi !== photoIdx) };
     }));
   };
+  const openDevCamera  = (i: number) => { const r = devFileRefs.current[i]; if (r) { r.setAttribute('capture', 'environment'); r.click(); } };
+  const openDevGallery = (i: number) => { const r = devFileRefs.current[i]; if (r) { r.removeAttribute('capture'); r.click(); } };
 
-  const openDevCamera = (devIdx: number) => {
-    const ref = devFileRefs.current[devIdx];
-    if (ref) { ref.setAttribute('capture', 'environment'); ref.click(); }
-  };
-
-  const openDevGallery = (devIdx: number) => {
-    const ref = devFileRefs.current[devIdx];
-    if (ref) { ref.removeAttribute('capture'); ref.click(); }
-  };
-
-  // ─── Arch/Dev update ──────────────────────────────────────────────────────
-  const updateArch = (i: number, k: keyof ArchRow, v: string) =>
-    setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
-
-  const updateDevName = (i: number, v: string) =>
-    setDevs(p => p.map((r, idx) => idx === i ? { ...r, name: v } : r));
-
-  const updateDev = (i: number, k: keyof DevRow, v: string) => {
+  // ─── Dev update ───────────────────────────────────────────────────────────
+  const updateArch    = (i: number, k: keyof ArchRow, v: string) => setArch(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
+  const updateDevName = (i: number, v: string) => setDevs(p => p.map((r, idx) => idx === i ? { ...r, name: v } : r));
+  const updateDev     = (i: number, k: keyof DevRow, v: string) => {
     setDevs(p => p.map((r, idx) => {
       if (idx !== i) return r;
       const n = { ...r, [k]: parseFloat(v) || 0 };
@@ -208,20 +170,22 @@ export default function Report({ data }: ReportProps) {
       return n;
     }));
   };
+  const addDev    = () => setDevs(p => [...p, newDev(p.length + 1)]);
+  const removeDev = (i: number) => setDevs(p => p.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, num: idx + 1 })));
 
-  const addDev = () => setDevs(p => [...p, newDev(p.length + 1)]);
-
-  const removeDev = (i: number) =>
-    setDevs(p => p.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, num: idx + 1 })));
-
-  // ─── base64 ───────────────────────────────────────────────────────────────
-  const fileToBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve((e.target?.result as string).split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+  // ─── Rasmni to'g'ridan Telegram ga yuborish ───────────────────────────────
+  const sendPhotoToTelegram = async (chatId: number, file: File, caption?: string) => {
+    const fd = new FormData();
+    fd.append('chat_id', String(chatId));
+    fd.append('photo', file, file.name);
+    if (caption) fd.append('caption', caption);
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+      method: 'POST',
+      body: fd,
     });
+    const data = await res.json();
+    if (!data.ok) throw new Error(`Rasm yuborishda xato: ${data.description}`);
+  };
 
   // ─── Yuborish ─────────────────────────────────────────────────────────────
   const sendToChat = async () => {
@@ -230,27 +194,31 @@ export default function Report({ data }: ReportProps) {
 
     setIsGenerating(true);
     try {
-      const generalPhotosB64 = await Promise.all(
-        generalPhotos.map(async p => ({
-          base64: await fileToBase64(p.file),
-          mime: p.file.type,
-          name: p.file.name,
-        }))
-      );
+      // 1. Umumiy rasmlar — to'g'ridan Telegram ga
+      for (let i = 0; i < generalPhotos.length; i++) {
+        const caption = i === 0
+          ? `📸 Ob'ekt rasmlari\n👤 ${data.client.fullName}\n📍 ${data.client.address}`
+          : undefined;
+        await sendPhotoToTelegram(chatId, generalPhotos[i].file, caption);
+      }
 
-      const devsWithPhotos = await Promise.all(
-        devs.map(async d => ({
-          num: d.num, name: d.name, watt: d.watt, count: d.count,
-          totalKw: d.totalKw, hours: d.hours, dayKw: d.dayKw, monthKw: d.monthKw,
-          photos: await Promise.all(
-            d.photos.map(async p => ({
-              base64: await fileToBase64(p.file),
-              mime: p.file.type,
-              name: p.file.name,
-            }))
-          ),
-        }))
-      );
+      // 2. Har bir qurilma rasmlari — to'g'ridan Telegram ga
+      for (const dev of devs) {
+        if (dev.photos.length > 0) {
+          for (let i = 0; i < dev.photos.length; i++) {
+            const caption = i === 0
+              ? `🔌 ${dev.num}. ${dev.name || 'Qurilma'}\n⚡ ${dev.watt} Vt × ${dev.count} dona\n🕐 ${dev.hours} soat/kun`
+              : undefined;
+            await sendPhotoToTelegram(chatId, dev.photos[i].file, caption);
+          }
+        }
+      }
+
+      // 3. Word hujjat — Vercel orqali (rasmsiz, kichik payload)
+      const devsData = devs.map(d => ({
+        num: d.num, name: d.name, watt: d.watt, count: d.count,
+        totalKw: d.totalKw, hours: d.hours, dayKw: d.dayKw, monthKw: d.monthKw,
+      }));
 
       const res = await fetch('https://sunenergyaudit.vercel.app/api/send-report', {
         method: 'POST',
@@ -260,15 +228,15 @@ export default function Report({ data }: ReportProps) {
           client: data.client,
           extra: { docNumber: docNumber || '001', formDate, auditDate },
           arch,
-          devs: devsWithPhotos,
-          photos: generalPhotosB64,
+          devs: devsData,
+          photos: [], // rasmlar allaqachon yuborildi
         }),
       });
 
       const result = JSON.parse(await res.text());
       if (!res.ok || !result.ok) throw new Error(result.error || `Server xatosi (${res.status})`);
 
-      const totalPhotos = generalPhotosB64.length + devsWithPhotos.reduce((s, d) => s + d.photos.length, 0);
+      const totalPhotos = generalPhotos.length + devs.reduce((s, d) => s + d.photos.length, 0);
       hapticImpact('heavy');
       showAlert(`✅ Hujjat${totalPhotos > 0 ? ` va ${totalPhotos} ta rasm` : ''} chatga yuborildi!`);
     } catch (e: any) {
@@ -298,7 +266,7 @@ export default function Report({ data }: ReportProps) {
         ))}
       </div>
 
-      {/* ── Xulosa ── */}
+      {/* Xulosa */}
       {tab === 'summary' && <>
         <div style={sec}>
           <h3 style={{ margin: '0 0 10px' }}>👤 Mijoz</h3>
@@ -311,7 +279,7 @@ export default function Report({ data }: ReportProps) {
         </p>
       </>}
 
-      {/* ── Arxitektura ── */}
+      {/* Arxitektura */}
       {tab === 'arch' && (
         <div style={sec}>
           <h3 style={{ margin: '0 0 14px' }}>🏗 2.1. Arxitektura va konstruktsiya</h3>
@@ -331,7 +299,7 @@ export default function Report({ data }: ReportProps) {
         </div>
       )}
 
-      {/* ── Qurilmalar ── */}
+      {/* Qurilmalar */}
       {tab === 'dev' && (
         <div style={sec}>
           <h3 style={{ margin: '0 0 14px' }}>💡 2.3. Elektr qurilmalar</h3>
@@ -358,7 +326,6 @@ export default function Report({ data }: ReportProps) {
                 onRemove={pi => removeDevPhoto(i, pi)}
               />
 
-              {/* Qurilma nomi */}
               <label style={lbl}>Qurilma nomi</label>
               <input style={{ ...inp, marginBottom: '8px' }} value={row.name}
                 onChange={e => updateDevName(i, e.target.value)}
@@ -408,7 +375,7 @@ export default function Report({ data }: ReportProps) {
         </div>
       )}
 
-      {/* ── Hujjat ── */}
+      {/* Hujjat */}
       {tab === 'doc' && (
         <div style={sec}>
           <h3 style={{ margin: '0 0 14px' }}>📄 Hujjat ma'lumotlari</h3>
@@ -453,37 +420,19 @@ export default function Report({ data }: ReportProps) {
 
             {generalPhotos.length < 10 && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button onClick={() => {
-                  if (generalFileRef.current) {
-                    generalFileRef.current.setAttribute('capture', 'environment');
-                    generalFileRef.current.click();
-                  }
-                }} style={{
+                <button onClick={() => { if (generalFileRef.current) { generalFileRef.current.setAttribute('capture', 'environment'); generalFileRef.current.click(); } }} style={{
                   padding: '12px 8px', background: '#e3f2fd', border: '1px solid #90caf9',
-                  borderRadius: '10px', cursor: 'pointer', fontSize: '14px',
-                  color: '#1565c0', fontWeight: 600,
+                  borderRadius: '10px', cursor: 'pointer', fontSize: '14px', color: '#1565c0', fontWeight: 600,
                 }}>📷 Kamera</button>
-                <button onClick={() => {
-                  if (generalFileRef.current) {
-                    generalFileRef.current.removeAttribute('capture');
-                    generalFileRef.current.click();
-                  }
-                }} style={{
+                <button onClick={() => { if (generalFileRef.current) { generalFileRef.current.removeAttribute('capture'); generalFileRef.current.click(); } }} style={{
                   padding: '12px 8px', background: '#f3e5f5', border: '1px solid #ce93d8',
-                  borderRadius: '10px', cursor: 'pointer', fontSize: '14px',
-                  color: '#6a1b9a', fontWeight: 600,
+                  borderRadius: '10px', cursor: 'pointer', fontSize: '14px', color: '#6a1b9a', fontWeight: 600,
                 }}>🖼 Galereya</button>
               </div>
             )}
 
-            <input
-              ref={generalFileRef}
-              type="file"
-              accept="image/*"
-              multiple
-              style={{ display: 'none' }}
-              onChange={handleGeneralPhoto}
-            />
+            <input ref={generalFileRef} type="file" accept="image/*" multiple
+              style={{ display: 'none' }} onChange={handleGeneralPhoto} />
           </div>
 
           <button onClick={sendToChat} disabled={isGenerating} style={{
@@ -497,7 +446,7 @@ export default function Report({ data }: ReportProps) {
           </button>
 
           <p style={{ marginTop: '10px', fontSize: '12px', color: '#888', textAlign: 'center' }}>
-            Server .docx yaratadi, rasmlar bilan chatga yuboradi
+            Rasmlar va Word hujjat chatga yuboriladi
           </p>
         </div>
       )}
