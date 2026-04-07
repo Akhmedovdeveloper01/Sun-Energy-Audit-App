@@ -178,18 +178,16 @@ export default function Report({ data }: ReportProps) {
   const sendToChat = async () => {
     const chatId = tg?.initDataUnsafe?.user?.id;
     if (!chatId) { showAlert('❌ Telegram orqali oching'); return; }
-
+  
     setIsGenerating(true);
     try {
-      // 1. Umumiy rasmlarni resize qilib base64 ga
       const generalPhotosB64 = await Promise.all(
         generalPhotos.map(async p => ({
           base64: await resizeImage(p.file, 800, 0.75),
           name: p.file.name,
         }))
       );
-
-      // 2. Qurilma rasmlarini resize qilib base64 ga
+  
       const devsWithPhotos = await Promise.all(
         devs.map(async d => ({
           num: d.num, name: d.name, watt: d.watt, count: d.count,
@@ -202,8 +200,8 @@ export default function Report({ data }: ReportProps) {
           ),
         }))
       );
-
-      // 3. Vercel ga yuborish (rasmlar resize qilingan, hajmi kichik)
+  
+      let text = '';
       const res = await fetch('https://sunenergyaudit.vercel.app/api/send-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -216,28 +214,27 @@ export default function Report({ data }: ReportProps) {
           photos: generalPhotosB64,
         }),
       });
-
-      const text = await res.text();
-      console.log('Server raw response:', text);
+  
+      text = await res.text();
+      console.log('Server response:', text.substring(0, 300));
+  
       let result;
       try {
         result = JSON.parse(text);
       } catch {
-        throw new Error(`JSON parse xato. Server javobi: ${text.substring(0, 200)}`);
+        throw new Error(`Server javobi: ${text.substring(0, 200)}`);
       }
-      if (!res.ok || !result.ok) throw new Error(result.error || result.stack || `Server xatosi ${res.status}: ${text.substring(0, 100)}`);
-
-
-      // const result = JSON.parse(await res.text());
-      // if (!res.ok || !result.ok) throw new Error(result.error || `Server xatosi (${res.status})`);
-
+  
+      if (!res.ok || !result.ok) {
+        throw new Error(result.error || `Server xatosi ${res.status}`);
+      }
+  
       const totalPhotos = generalPhotosB64.length + devsWithPhotos.reduce((s, d) => s + d.photos.length, 0);
       hapticImpact('heavy');
-
       showAlert(`✅ Hujjat${totalPhotos > 0 ? ` va ${totalPhotos} ta rasm` : ''} chatga yuborildi!`);
+  
     } catch (e: any) {
-      // showAlert(`❌ Xatolik: ${e.message}`);
-      showAlert(`❌ Xatolik: ${JSON.stringify(e.message)} | ${e.stack?.split('\n')[0] || ''}`);
+      showAlert(`❌ Xatolik: ${e?.message || 'Noma\'lum xato'}`);
     } finally {
       setIsGenerating(false);
     }
