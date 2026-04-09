@@ -687,7 +687,7 @@ export default async function handler(req, res) {
         if (!ALLOWED_IDS.includes(Number(chatId))) {
             return res.status(403).json({
                 ok: false,
-                error: "Sizda ushbu xizmatdan foydalanish huquqi yo'q. Admin bilan bog'laning: @SIZNING_USERNAME",
+                error: "Sizda ushbu xizmatdan foydalanish huquqi yo'q. Admin bilan bog'laning: @Ahmedov_Mahmud",
             });
         }
 
