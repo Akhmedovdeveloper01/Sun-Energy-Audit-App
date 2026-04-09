@@ -13,17 +13,16 @@ export default async function handler(req, res) {
   
     // /myid command
     if (text === '/myid' || text.startsWith('/myid')) {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: `👤 Sizning Telegram ID ingiz:\n\n<code>${chatId}</code>\n\nShu raqamni admin ga yuboring.`,
-          parse_mode: 'HTML',
-        }),
-      });
-    }
-  
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: `👤 Sizning Telegram ID ingiz:\n\n<code>${chatId}</code>\n\n📩 Shu raqamni @Ahmedov_Mahmud ga yuboring.`,
+            parse_mode: 'HTML',
+          }),
+        });
+      }
     // /start command
     if (text === '/start') {
       await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
