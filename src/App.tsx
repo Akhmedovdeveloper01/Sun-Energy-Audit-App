@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTelegram } from './hooks/useTelegram';
 import ClientInfo from './components/ClientInfo';
 import Report from './components/Report';
 import { AuditData, ClientData } from './types/audit.types';
 import './App.css';
+
+// ─── Ruxsatli ID lar ─────────────────────────────────────────────────────────
+const ALLOWED_IDS = [
+  1727203202,
+];
 
 const initialAuditData: AuditData = {
   client: {
@@ -25,7 +30,18 @@ const initialAuditData: AuditData = {
 function App() {
   const [step, setStep] = useState<number>(1);
   const [auditData, setAuditData] = useState<AuditData>(initialAuditData);
-  const { hapticImpact, isReady } = useTelegram();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const { hapticImpact, isReady, tg } = useTelegram();
+
+  useEffect(() => {
+    if (!isReady) return;
+    const chatId = tg?.initDataUnsafe?.user?.id;
+    if (!chatId) {
+      setAllowed(false);
+      return;
+    }
+    setAllowed(ALLOWED_IDS.includes(Number(chatId)));
+  }, [isReady, tg]);
 
   const updateClient = (clientData: Partial<ClientData>) => {
     setAuditData(prev => ({
@@ -39,8 +55,37 @@ function App() {
     setStep(prev => prev + 1);
     hapticImpact('medium');
   };
-  if (!isReady) {
-    return <div className="loading">Yuklanmoqda...</div>;
+
+  // Yuklanmoqda
+  if (!isReady || allowed === null) {
+    return (
+      <div style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        height: '100vh', fontFamily: 'sans-serif',
+      }}>
+        <p>⏳ Yuklanmoqda...</p>
+      </div>
+    );
+  }
+
+  // Ruxsat yo'q
+  if (!allowed) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        alignItems: 'center', height: '100vh', fontFamily: 'sans-serif',
+        padding: '24px', textAlign: 'center',
+      }}>
+        <div style={{ fontSize: '56px', marginBottom: '16px' }}>🔒</div>
+        <h2 style={{ margin: '0 0 10px', color: '#333' }}>Kirish taqiqlangan</h2>
+        <p style={{ color: '#666', marginBottom: '8px', lineHeight: 1.5 }}>
+          Sizda ushbu xizmatdan foydalanish huquqi yo'q.
+        </p>
+        <p style={{ color: '#666', lineHeight: 1.5 }}>
+          Telegram ID ni adminga yuboring<br />
+        </p>
+      </div>
+    );
   }
 
   return (
