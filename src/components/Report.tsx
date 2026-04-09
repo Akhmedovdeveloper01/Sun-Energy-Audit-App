@@ -31,7 +31,7 @@ const newDev = (num: number): DevRow => ({
 });
 
 // ─── Rasmni resize qilish (canvas orqali) ────────────────────────────────────
-const resizeImage = (file: File, maxSize = 800, quality = 0.75): Promise<string> =>
+const resizeImage = (file: File, maxSize = 600, quality = 0.5): Promise<string> =>
   new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -49,7 +49,7 @@ const resizeImage = (file: File, maxSize = 800, quality = 0.75): Promise<string>
       const base64 = canvas.toDataURL('image/jpeg', quality).split(',')[1];
       resolve(base64);
     };
-    img.onerror = reject;
+    img.onerror = (err) => reject(new Error(`Rasm yuklanmadi: ${file.name} — ${err}`));
     img.src = url;
   });
 
@@ -121,6 +121,7 @@ const TABS: { id: TabId; label: string }[] = [
 export default function Report({ data }: ReportProps) {
   const { showAlert, hapticImpact, tg } = useTelegram();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [resizeProgress, setResizeProgress] = useState<{ current: number; total: number } | null>(null);
   const [tab, setTab] = useState<TabId>('summary');
 
   const [docNumber, setDocNumber] = useState('');
@@ -178,65 +179,117 @@ export default function Report({ data }: ReportProps) {
   const sendToChat = async () => {
     const chatId = tg?.initDataUnsafe?.user?.id;
     if (!chatId) { showAlert('❌ Telegram orqali oching'); return; }
-  
+
+    const totalPhotoCount =
+      generalPhotos.length + devs.reduce((s, d) => s + d.photos.length, 0);
+
     setIsGenerating(true);
+    setResizeProgress(totalPhotoCount > 0 ? { current: 0, total: totalPhotoCount } : null);
+
     try {
+      let resizedCount = 0;
+
       const generalPhotosB64 = await Promise.all(
-        generalPhotos.map(async p => ({
-          base64: await resizeImage(p.file, 800, 0.75),
-          name: p.file.name,
-        }))
+        generalPhotos.map(async p => {
+          const base64 = await resizeImage(p.file, 600, 0.5);
+          resizedCount++;
+          setResizeProgress({ current: resizedCount, total: totalPhotoCount });
+          const sizeKB = Math.round(base64.length * 3 / 4 / 1024);
+          console.log(`Rasm: ${p.file.name} → ${sizeKB} KB`);
+          return { base64, name: p.file.name };
+        })
       );
-  
+
       const devsWithPhotos = await Promise.all(
         devs.map(async d => ({
           num: d.num, name: d.name, watt: d.watt, count: d.count,
           totalKw: d.totalKw, hours: d.hours, dayKw: d.dayKw, monthKw: d.monthKw,
           photos: await Promise.all(
-            d.photos.map(async p => ({
-              base64: await resizeImage(p.file, 800, 0.75),
-              name: p.file.name,
-            }))
+            d.photos.map(async p => {
+              const base64 = await resizeImage(p.file, 600, 0.5);
+              resizedCount++;
+              setResizeProgress({ current: resizedCount, total: totalPhotoCount });
+              const sizeKB = Math.round(base64.length * 3 / 4 / 1024);
+              console.log(`Qurilma rasm: ${p.file.name} → ${sizeKB} KB`);
+              return { base64, name: p.file.name };
+            })
           ),
         }))
       );
-  
-      let text = '';
-      const res = await fetch('https://sunenergyaudit.vercel.app/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chatId,
-          client: data.client,
-          extra: { docNumber: docNumber || '001', formDate, auditDate },
-          arch,
-          devs: devsWithPhotos,
-          photos: generalPhotosB64,
-        }),
-      });
-  
-      text = await res.text();
+
+      setResizeProgress(null);
+
+      const payload = {
+        chatId,
+        client: data.client,
+        extra: { docNumber: docNumber || '001', formDate, auditDate },
+        arch,
+        devs: devsWithPhotos,
+        photos: generalPhotosB64,
+      };
+
+      const payloadStr = JSON.stringify(payload);
+      const payloadMB = payloadStr.length / (1024 * 1024);
+      console.log(`Jami payload: ${payloadMB.toFixed(2)} MB`);
+
+      if (payloadMB > 4) {
+        throw new Error(
+          `Payload hajmi ${payloadMB.toFixed(1)}MB — Vercel limiti 4.5MB. Rasm sonini kamaytiring.`
+        );
+      }
+      if (payloadMB > 3) {
+        console.warn(`Ogohlantirish: payload ${payloadMB.toFixed(1)}MB — limitga yaqin!`);
+        showAlert(`⚠️ Rasm hajmi katta (${payloadMB.toFixed(1)}MB). Muammo bo'lishi mumkin...`);
+      }
+
+      let res: Response;
+      try {
+        res = await fetch('https://sunenergyaudit.vercel.app/api/send-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payloadStr,
+        });
+      } catch (networkErr: any) {
+        throw new Error(`Tarmoq xatosi: ${networkErr?.message || 'Internet aloqasini tekshiring'}`);
+      }
+
+      const text = await res.text();
       console.log('Server response:', text.substring(0, 300));
-  
-      let result;
+
+      if (res.status === 413) {
+        throw new Error('Payload hajmi juda katta (>4.5MB). Rasm sonini yoki o\'lchamini kamaytiring.');
+      }
+
+      let result: { ok: boolean; error?: string };
       try {
         result = JSON.parse(text);
       } catch {
-        throw new Error(`Server javobi: ${text.substring(0, 200)}`);
+        throw new Error(`Server javobi noto'g'ri (${res.status}): ${text.substring(0, 150)}`);
       }
-  
+
       if (!res.ok || !result.ok) {
-        throw new Error(result.error || `Server xatosi ${res.status}`);
+        const errMsg = result.error || `Server xatosi: ${res.status}`;
+        if (errMsg.includes('Too Many Requests') || errMsg.includes('429')) {
+          throw new Error('Telegram: juda ko\'p so\'rov. Bir oz kuting va qayta urinib ko\'ring.');
+        }
+        throw new Error(errMsg);
       }
-  
-      const totalPhotos = generalPhotosB64.length + devsWithPhotos.reduce((s, d) => s + d.photos.length, 0);
+
+      const sentPhotos = generalPhotosB64.length + devsWithPhotos.reduce((s, d) => s + d.photos.length, 0);
       hapticImpact('heavy');
-      showAlert(`✅ Hujjat${totalPhotos > 0 ? ` va ${totalPhotos} ta rasm` : ''} chatga yuborildi!`);
-  
+      showAlert(`✅ Hujjat${sentPhotos > 0 ? ` va ${sentPhotos} ta rasm` : ''} chatga yuborildi!`);
+
+      // Formani tozalash
+      generalPhotos.forEach(p => URL.revokeObjectURL(p.preview));
+      setGeneralPhotos([]);
+      devs.forEach(d => d.photos.forEach(p => URL.revokeObjectURL(p.preview)));
+      setDevs([newDev(1)]);
+
     } catch (e: any) {
-      showAlert(`❌ Xatolik: ${e?.message || 'Noma\'lum xato'}`);
+      showAlert(`❌ Xatolik: ${e?.message || 'Noma\'lum xato. Console ni tekshiring.'}`);
     } finally {
       setIsGenerating(false);
+      setResizeProgress(null);
     }
   };
 
@@ -386,8 +439,29 @@ export default function Report({ data }: ReportProps) {
             fontSize: '16px', fontWeight: 700,
             cursor: isGenerating ? 'not-allowed' : 'pointer',
           }}>
-            {isGenerating ? '⏳ Yuborilmoqda...' : '📨 Hujjat va rasmlarni yuborish'}
+            {isGenerating
+              ? resizeProgress
+                ? `⏳ Rasmlar: ${resizeProgress.current}/${resizeProgress.total} qayta o'lchanmoqda...`
+                : '⏳ Hujjat yuborilmoqda...'
+              : '📨 Hujjat va rasmlarni yuborish'}
           </button>
+
+          {isGenerating && resizeProgress && (
+            <div style={{ marginTop: '8px' }}>
+              <div style={{ background: '#e0e0e0', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  height: '100%',
+                  width: `${(resizeProgress.current / resizeProgress.total) * 100}%`,
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+              <p style={{ textAlign: 'center', fontSize: '11px', color: '#666', margin: '4px 0 0' }}>
+                {resizeProgress.current} / {resizeProgress.total} ta rasm tayyor
+              </p>
+            </div>
+          )}
+
           <p style={{ marginTop: '10px', fontSize: '12px', color: '#888', textAlign: 'center' }}>
             Rasmlar hujjat ichiga qo'shilib chatga yuboriladi
           </p>

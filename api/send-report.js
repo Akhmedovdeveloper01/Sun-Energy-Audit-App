@@ -45,53 +45,31 @@ function spacer() {
   return new Paragraph({ children: [new TextRun('')], spacing: { before: 60, after: 60 } });
 }
 
+// ─── Rasm turini aniqlash (base64 boshlanmasiga qarab) ───────────────────────
+function detectImageType(base64) {
+  if (!base64) return 'jpg';
+  if (base64.startsWith('/9j/')) return 'jpg';
+  if (base64.startsWith('iVBOR')) return 'png';
+  if (base64.startsWith('R0lGO')) return 'gif';
+  if (base64.startsWith('UklGR')) return 'bmp';
+  return 'jpg'; // default
+}
+
 // ─── 2 ustunli rasm grid ─────────────────────────────────────────────────────
 // colW = [4700, 4700] (ikki teng ustun, oraliq 238 DXA)
 // Rasm o'lchami EMU: 1 sm = 914400 EMU, 1 inch = 914400 EMU
 // A4 content = ~17cm, 1 ustun = ~8cm = 7315200 EMU
 
 function buildPhotoGrid(photos, sectionTitle) {
-  const IMG_W = 7200000; // ~7.87sm (bir ustun kengligi)
-  const IMG_H = 5400000; // ~5.9sm (4:3 nisbat)
-  const COL   = 4700;    // DXA, ikki ustun
+  try {
+    const COL = 4700; // DXA, ikki ustun
 
-  const elements = [];
+    const elements = [];
 
-  if (sectionTitle) {
-    elements.push(heading(sectionTitle, 22));
-    elements.push(spacer());
-  }
-
-  // Juft-juft qilib jadval yaratamiz
-  const rows = [];
-  for (let i = 0; i < photos.length; i += 2) {
-    const left  = photos[i];
-    const right  = photos[i + 1];
-
-    // Rasm cell yaratuvchi funksiya
-    const imgCell = (photo, label) => {
-      const imgBuf = Buffer.from(photo.base64, 'base64');
-      return new TableCell({
-        borders: noBorders,
-        width: { size: COL, type: WidthType.DXA },
-        margins: { top: 60, bottom: 60, left: 60, right: 60 },
-        children: [
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [new ImageRun({
-              data: imgBuf,
-              transformation: { width: 330, height: 250 }, // px, Word da
-              type: 'jpg',
-            })],
-          }),
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 40, after: 40 },
-            children: [new TextRun({ text: label || '', size: 18, font: 'Times New Roman', italics: true })],
-          }),
-        ],
-      });
-    };
+    if (sectionTitle) {
+      elements.push(heading(sectionTitle, 22));
+      elements.push(spacer());
+    }
 
     // Bo'sh cell
     const emptyCell = () => new TableCell({
@@ -100,24 +78,69 @@ function buildPhotoGrid(photos, sectionTitle) {
       children: [new Paragraph({ children: [new TextRun('')] })],
     });
 
-    rows.push(new TableRow({
-      children: [
-        imgCell(left, left.caption || ''),
-        right ? imgCell(right, right.caption || '') : emptyCell(),
-      ],
-    }));
-  }
+    // Rasm cell yaratuvchi funksiya — xato bo'lsa bo'sh cell qaytaradi
+    const imgCell = (photo, label) => {
+      try {
+        if (!photo?.base64) return emptyCell();
+        const imgBuf = Buffer.from(photo.base64, 'base64');
+        const imgType = detectImageType(photo.base64);
+        return new TableCell({
+          borders: noBorders,
+          width: { size: COL, type: WidthType.DXA },
+          margins: { top: 60, bottom: 60, left: 60, right: 60 },
+          children: [
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new ImageRun({
+                data: imgBuf,
+                transformation: { width: 330, height: 250 },
+                type: imgType,
+              })],
+            }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { before: 40, after: 40 },
+              children: [new TextRun({ text: label || '', size: 18, font: 'Times New Roman', italics: true })],
+            }),
+          ],
+        });
+      } catch (cellErr) {
+        console.error('imgCell xatosi:', cellErr.message, '| Rasm:', photo?.name);
+        return emptyCell();
+      }
+    };
 
-  if (rows.length > 0) {
-    elements.push(new Table({
-      width: { size: W, type: WidthType.DXA },
-      columnWidths: [COL, COL],
-      rows,
-    }));
-    elements.push(spacer());
-  }
+    // Juft-juft qilib jadval yaratamiz
+    const rows = [];
+    for (let i = 0; i < photos.length; i += 2) {
+      const left  = photos[i];
+      const right = photos[i + 1];
+      try {
+        rows.push(new TableRow({
+          children: [
+            imgCell(left, left.caption || ''),
+            right ? imgCell(right, right.caption || '') : emptyCell(),
+          ],
+        }));
+      } catch (rowErr) {
+        console.error('TableRow xatosi:', rowErr.message);
+      }
+    }
 
-  return elements;
+    if (rows.length > 0) {
+      elements.push(new Table({
+        width: { size: W, type: WidthType.DXA },
+        columnWidths: [COL, COL],
+        rows,
+      }));
+      elements.push(spacer());
+    }
+
+    return elements;
+  } catch (err) {
+    console.error('buildPhotoGrid umumiy xatosi:', err.message);
+    return []; // Hujjatni to'xtatmasdan, rasmlar bo'limini o'tkazib yuboradi
+  }
 }
 
 async function buildDocx({ client, extra, arch, eng, devs, photos }) {
