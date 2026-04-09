@@ -15,7 +15,7 @@ import {
     ImageRun,
 } from "docx";
 
-const ALLOWED_IDS = [1727203202];
+const ALLOWED_IDS = [1727203202, 873890399];
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;

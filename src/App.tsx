@@ -8,6 +8,7 @@ import './App.css';
 // ─── Ruxsatli ID lar ─────────────────────────────────────────────────────────
 const ALLOWED_IDS = [
   1727203202,
+  873890399
 ];
 
 const initialAuditData: AuditData = {
