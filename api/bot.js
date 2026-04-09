@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          text: `Salom ${firstName}! 👋\n\nID ingizni bilish uchun /myid yuboring.`,
+          text: `Salom ${firstName}! Botimizdan foydalanish uchun, ruxsat olishingiz kerak. Telegram ID'ni adminga yuboring va botimizdan foydalaning.  👋\n\nID ingizni bilish uchun /myid yuboring.`,
         }),
       });
     }
