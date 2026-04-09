@@ -299,11 +299,11 @@ async function buildDocx({ client, extra, arch, eng, devs, photos }) {
     // }
     for (const dev of devsWithPhotos) {
       const label = `${dev.num}. ${dev.name || 'Qurilma'} — ${dev.watt} Vt × ${dev.count} dona`;
-      const photosWithCaption = dev.photos.map((p, i) => ({
+      const photosWithCaption = dev.photos.map(() => ({
         ...p,
-        caption: label, // har bir rasm ostida qurilma nomi
+        caption: label, // rasm ostida qurilma nomi
       }));
-      children.push(...buildPhotoGrid(photosWithCaption, label));
+      children.push(...buildPhotoGrid(photosWithCaption, null)); // null = sarlavha yo'q
     }
   }
 
